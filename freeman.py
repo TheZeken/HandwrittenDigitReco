@@ -55,7 +55,18 @@ def show(image):
 
 training_data = list(read(dataset="training", path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"))
 print(len(training_data))
-label,pixels = training_data[57001]
+label,pixels = training_data[1500]
 print(label)
 print(pixels.shape)
+
+for x in range(0,28):
+    for y in range (0,28):
+        if pixels[x,y] > 100 :
+            pixels[x,y] = 255
+        else:
+            pixels[x,y] = 0
+
+print(pixels[10,12])
 show(pixels)
+
+
