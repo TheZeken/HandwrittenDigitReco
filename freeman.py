@@ -53,20 +53,35 @@ def show(image):
     ax.yaxis.set_ticks_position('left')
     pyplot.show()
 
+
 training_data = list(read(dataset="training", path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"))
 print(len(training_data))
-label,pixels = training_data[1500]
+label,pixels = training_data[150] #1250
 print(label)
 print(pixels.shape)
 
-for x in range(0,28):
-    for y in range (0,28):
-        if pixels[x,y] > 100 :
-            pixels[x,y] = 255
-        else:
-            pixels[x,y] = 0
+for x_bw in range(0,28):
+    for y_bw in range (0,28):
+        if pixels[x_bw,y_bw] > 0 :
+            pixels[x_bw,y_bw] = 255
 
 print(pixels[10,12])
 show(pixels)
+
+#Find the starting point for the freeman function
+x = 0
+y = 0
+
+while pixels[x,y] != 255:
+    if y == 27:
+        x += 1
+        y = 0
+    else:
+        y += 1
+        
+print(x, "/" , y) #Starting point of the freeman code x and y
+
+     
+
 
 
