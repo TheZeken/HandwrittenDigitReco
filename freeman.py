@@ -14,9 +14,14 @@ import numpy as np
 path="C:\\Users\\edmon_000\\Desktop\\mldm year 2\\mldm project\\datasource\\"
 size_x = 28
 size_y = 28
-directions  =   [0,1,2,3,4,5,6,7] 
-change_x    =   [-1,0,1,1,1,0,-1,-1]
-change_y    =   [-1,-1,-1,0,1,1,1,0]
+#directions  =   [0,1,2,3,4,5,6,7] 
+directions = 7
+change_x    =   [-1,0, 1,
+                  1,   1,
+                  0,-1,-1]
+change_y    =   [-1,-1,-1,
+                 0,  1,
+                 1, 1,0]
 
 start_x = 0
 start_y = 0
@@ -95,12 +100,36 @@ for ii_x in range(0,size_x):
 start_x = iix
 start_y = iiy
 
+curr_x = start_x
+curr_y = start_y
+
+visited[iix,iiy] = 1
 
 """
 find first pixel - in a good image this will be the topmost and leftmost and this will be the starting point
 check the 8 pixels around this pixel in a clockwise direction to determine the possible direction to move
+this next pixel must be at the boundary (ie white space) and must be consecutive
+create a grid of visited pixels
+""""
 
+# this is to test whether the next consecutive pixel is a contour or no
+def iscontour(x,y):
+    contour = False
+    for (i, deltax) in enumerate(change_x):
+            deltay = change_y[i]
+            if pixels[x+deltax,y+deltay] == 0:
+                contour = True
+                break  # as long as there is atleast 1 white pixel, it is good
+    return contour
+        
+def feasible (x,y):
+        global pixels
+        if pixels[x,y] == 0 and : 
 
+            
+visited = np.zeros (size_x,size_y)
+for dirs in range(0,directions):
+    potential_next_x = 
 
 
 
