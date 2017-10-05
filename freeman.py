@@ -9,7 +9,22 @@ import os
 import struct
 import numpy as np
 
-def read(dataset = "training", path = "C:\\Users\\jerem\\Desktop\\M2\\ML\\"):
+
+##### definitions
+path="C:\\Users\\edmon_000\\Desktop\\mldm year 2\\mldm project\\datasource\\"
+size_x = 28
+size_y = 28
+directions  =   [0,1,2,3,4,5,6,7] 
+change_x    =   [-1,0,1,1,1,0,-1,-1]
+change_y    =   [-1,-1,-1,0,1,1,1,0]
+
+start_x = 0
+start_y = 0
+
+freeman_chain = []
+
+
+def read(dataset = "training", path=path):
     """
     Python function for importing the MNIST data set.  It returns an iterator
     of 2-tuples with the first element being the label and the second element
@@ -52,8 +67,10 @@ def show(image):
     ax.xaxis.set_ticks_position('top')
     ax.yaxis.set_ticks_position('left')
     pyplot.show()
+    
 
-training_data = list(read(dataset="training", path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"))
+
+training_data = list(read(dataset="training", path=path))
 print(len(training_data))
 label,pixels = training_data[1500]
 print(label)
@@ -68,5 +85,23 @@ for x in range(0,28):
 
 print(pixels[10,12])
 show(pixels)
+
+
+for ii_x in range(0,size_x):
+    for ii_y in range(0,size_y):
+        if pixels[ii_x,ii_y] == 255:
+            break
+
+start_x = iix
+start_y = iiy
+
+
+"""
+find first pixel - in a good image this will be the topmost and leftmost and this will be the starting point
+check the 8 pixels around this pixel in a clockwise direction to determine the possible direction to move
+
+
+
+
 
 
