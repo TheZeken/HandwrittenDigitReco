@@ -18,7 +18,8 @@ size_y = 28
 directions = 7
 
 
-change_x = [0,1,1]
+change_x    =   [0,  1,1,1,0,-1,-1, -1]
+change_y    =   [-1,-1,0,1,1, 1, 0, -1]
 
 """
 change_x    =   [-1,0, 1,
@@ -99,6 +100,7 @@ print(pixels[10,12])
 show(pixels)
 
 
+#look for the top most pixel to start at
 for ii_x in range(0,size_x):
     for ii_y in range(0,size_y):
         if pixels[ii_x,ii_y] == 255:
@@ -110,15 +112,18 @@ start_y = iiy
 curr_x = start_x
 curr_y = start_y
 
-visited[iix,iiy] = 1
+visited = np.zeros (size_x,size_y)
+visited[iix,iiy] = 1 #we have visited this pixel
 
 """
 1. find first pixel - 
 in a good image this will be the topmost and this will be the starting point
 
 2.check the 8 pixels around this pixel in a clockwise direction to determine the possible direction to move
-this next pixel must be at the boundary (ie white space) and must be consecutive
-create a grid of visited pixels so that we don't back track
+this next pixel in question:
+   i. must be at the boundary (ie white space) 
+   ii. and must be consecutive (connected to the previous pixel)
+3.create a grid of visited pixels so that we don't back track accidentally
 
 """"
 
@@ -135,15 +140,12 @@ def iscontour(x,y):
 # this is to see if the next pixel to be moved into is feasible
 def feasible (x,y):
         global pixels
-        if pixels[x,y] == 255 and iscontour(x,y): 
+        if pixels[x,y] == 255 and iscontour(x,y):
             return true
         return false
     
 #move into the first feasible pixel working in a clockwise direction           
-visited = np.zeros (size_x,size_y)
 for dirs in range(0,directions):
-    if (feasible(visited+change_x[direction],+change_y[direction]))
-
-
-
-
+    if (feasible(curr_x+change_x[direction],+curr_y+change_y[direction])):
+        curr_x = curr_x + change_x[direction]
+        curr_y = curr_y + change_y[direction]
