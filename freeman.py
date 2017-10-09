@@ -87,21 +87,46 @@ def show(image):
     
 
 
+<<<<<<< HEAD
 training_data = list(read(dataset="training", path=path))
 lg.debug(len(training_data))
 label,pixels = training_data[1501]
 lg.debug(label)
 lg.debug(pixels.shape)
+=======
+training_data = list(read(dataset="training", path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"))
+>>>>>>> 2642430dbc0d44eb8281882f3f8d4a826f81e307
 
-for x in range(0,28):
-    for y in range (0,28):
-        if pixels[x,y] > 100 :
-            pixels[x,y] = 255
-        else:
-            pixels[x,y] = 0
+label,pixels = training_data[150] #1250
+print(label)
 
+<<<<<<< HEAD
 lg.debug(pixels[10,12])
+=======
+for x_bw in range(0,28):
+    for y_bw in range (0,28):
+        if pixels[x_bw,y_bw] > 0 :
+            pixels[x_bw,y_bw] = 255
+                  
+>>>>>>> 2642430dbc0d44eb8281882f3f8d4a826f81e307
 show(pixels)
+
+#Find the starting point for the freeman function
+x = 0
+y = 0
+
+while pixels[x,y] != 255:
+    if y == 27:
+        x += 1
+        y = 0
+    else:
+        y += 1
+        
+print(x, "/" , y) #Starting point of the freeman code x and y
+
+     
+     
+
 
 
 #find first starting pixel. inner loop is top down, outer loop is left to right
