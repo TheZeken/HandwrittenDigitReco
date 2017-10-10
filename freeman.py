@@ -24,8 +24,22 @@ totalcells = size_x*size_y
 
 directions = 8
 
+""" surrounding pixels -
+direction:[y,x] where xxx is the current pixel
+we use 0:[-1,0] (up) as the current starting point
+
+          
+7:[-1,-1]    0:[-1,0]   1:[1,1]
+
+6:[0,-1]     XXX        2:[0,1]
+
+5:[-1,-1]   4:[1,0]     3:[1,1] 
+
+"""
+
+
 change_y    =   [-1,-1,0,1,1, 1, 0, -1]
-change_x    =   [0,  1,1,1,0,-1,-1, -1]
+change_x    =   [0,1,1,1,0,-1,-1, -1]
 
 start_x = 0
 start_y = 0
@@ -137,7 +151,7 @@ def iscontour(y,x):
     for (i, delta_x) in enumerate(change_x):
             delta_y = change_y[i]
             
-            # i am %2=0 because this selects only square adjacent directions and not corner directions
+            # i am modding %2=0 because this selects only square adjacent directions and not corner directions. corners = merde
             if pixels[y+delta_y,x+delta_x] == 0 and i%2==0:
                 iscontour = True
                 break  # as long as there is at least 1 adjacent white pixel then this pixel is a contour
@@ -152,7 +166,6 @@ def feasible (y,x):
             return True
         return False
     
-loopcount = 0
 stop = False
 ot = ""
 
@@ -160,7 +173,6 @@ disjoncteur = 1
 #si on trouve qu'on a dépassé plusque 1 iteration sans bouger, le disjoncteur reste a 0, et la boucle s'arrete
 while disjoncteur:
     disjoncteur = 0 
-    loopcount = loopcount + 1
     for dirs in range(0,directions):
         #move into the first feasible pixel around a current pixel, while working in a clockwise direction ...dirs = 0 to 7
         if (feasible(curr_y+change_y[dirs],curr_x+change_x[dirs])):
