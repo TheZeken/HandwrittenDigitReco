@@ -2,7 +2,7 @@
 """
 Created on Mon Oct  2 08:37:43 2017
 
-@author: jerem
+@author: jerem, ishwar
 """
 
 import os
@@ -15,31 +15,22 @@ lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s
 
 ##### definitions
 path="C:\\Users\\edmon_000\\Desktop\\mldm year 2\\mldm project\\datasource\\"
+
+sample_image = 150 ### the image to test the freeman code
+
 size_x = 28
 size_y = 28
 totalcells = size_x*size_y
-#directions  =   [0,1,2,3,4,5,6,7] 
-directions = 7
 
+directions = 8
 
-change_x    =   [0,  1,1,1,0,-1,-1, -1]
 change_y    =   [-1,-1,0,1,1, 1, 0, -1]
-
-"""
-change_x    =   [-1,0, 1,
-                  1,   1,
-                  0,-1,-1]
-change_y    =   [-1,-1,-1,
-                 0,  1,
-                 1, 1,0]
-"""
-
+change_x    =   [0,  1,1,1,0,-1,-1, -1]
 
 start_x = 0
 start_y = 0
 
 freeman_chain = []
-
 
 def read(dataset = "training", path=path):
     """
@@ -85,75 +76,45 @@ def show(image):
     ax.yaxis.set_ticks_position('left')
     pyplot.show()
     
-
-
-<<<<<<< HEAD
 training_data = list(read(dataset="training", path=path))
 lg.debug(len(training_data))
-label,pixels = training_data[1501]
+label,pixels = training_data[sample_image]
 lg.debug(label)
 lg.debug(pixels.shape)
-=======
-training_data = list(read(dataset="training", path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"))
->>>>>>> 2642430dbc0d44eb8281882f3f8d4a826f81e307
+#=======
 
-label,pixels = training_data[150] #1250
-print(label)
-
-<<<<<<< HEAD
-lg.debug(pixels[10,12])
-=======
-for x_bw in range(0,28):
-    for y_bw in range (0,28):
+# on va convertir toute image en noir
+for x_bw in range(0,size_x):
+    for y_bw in range (0,size_y):
         if pixels[x_bw,y_bw] > 0 :
-            pixels[x_bw,y_bw] = 255
-                  
->>>>>>> 2642430dbc0d44eb8281882f3f8d4a826f81e307
+            pixels[x_bw,y_bw] = 255              
+#
 show(pixels)
 
 #Find the starting point for the freeman function
-x = 0
-y = 0
 
-while pixels[x,y] != 255:
-    if y == 27:
-        x += 1
-        y = 0
-    else:
-        y += 1
-        
-print(x, "/" , y) #Starting point of the freeman code x and y
-
-     
-     
-
-
-
-#find first starting pixel. inner loop is top down, outer loop is left to right
-testpi = np.zeros ((size_x,size_y))
-for ii_x in range(0,size_y):
-    for ii_y in range(0,size_x):
-        if pixels[ii_y,ii_x] == 255:
-            #testpi[ii_y,ii_x] = i-200
-            start_x = ii_x
+for ii_x in range(0,size_x):
+    for ii_y in range(0,size_y):
+        if pixels[ii_x,ii_y] == 255:
             start_y = ii_y
-            break
-    else:
-        continue
-    break
-
+            start_x = ii_x
 curr_x = start_x
 curr_y = start_y
 
-lg.debug(curr_x)
-lg.debug(curr_y)
 
-visited = np.zeros ((size_y,size_x))
-visited[ii_y,ii_x] = 1 #we have visited this pixel
+#on utilise curr_x, curr_y ci-dessous dans la boucle pour qu'on puisse porcourir le contour
+visited = np.zeros ((size_y,size_x)) # c'est pour se souvenir les pixels qu'on a deja parcouru
+visited[curr_y,curr_x] = 1 #we have visited this pixel
+    
+
+
+#c'est pour le deboggage...on peux afficher cela pour bien voir le contour qu'il avait parcouru
+freemancontour = np.zeros ((size_x,size_y))
+freemancontour[curr_y,curr_x] = 255
+
 
 """
-1. find first pixel - 
-in a good image this will be the topmost and this will be the starting point
+1. find first pixel to start
 
 2.check the 8 pixels around this pixel in a clockwise direction to determine the possible direction to move
 this next pixel in question:
@@ -162,37 +123,47 @@ this next pixel in question:
 3.create a grid of visited pixels so that we don't back track accidentally
 """
 
-# this is to test whether the next consecutive pixel is a contour or not
+# this is to test whether the next consecutive pixel is a contour or not, as we want to move into a border pixel
 def iscontour(y,x):
     iscontour = False
     global change_y,change_x,pixels
     for (i, delta_x) in enumerate(change_x):
             delta_y = change_y[i]
-            if pixels[y+delta_y,x+delta_x] == 0:
+            
+            # i am %2=0 because this selects only square adjacent directions and not corner directions
+            if pixels[y+delta_y,x+delta_x] == 0 and i%2==0:
                 iscontour = True
                 break  # as long as there is at least 1 adjacent white pixel then this pixel is a contour
-    return iscontour  
+    return iscontour
 
 # this is to see if the next pixel to be moved into is feasible
 def feasible (y,x):
         global pixels,visited
+        
+        # if the next pixel (as computed by the dir) is black, contour and not visited
         if pixels[y,x] == 255 and iscontour(y,x) and visited[y,x] != 1:
             return True
         return False
     
-cellsvisited = 0
+loopcount = 0
 stop = False
+ot = ""
 
-while (curr_y != start_y and curr_x != start_x or cellsvisited == 0) and cellsvisited <= 1200:
-    cellsvisited = cellsvisited + 1
+disjoncteur = 1
+#si on trouve qu'on a dépassé plusque 1 iteration sans bouger, le disjoncteur reste a 0, et la boucle s'arrete
+while disjoncteur:
+    disjoncteur = 0 
+    loopcount = loopcount + 1
     for dirs in range(0,directions):
-        #move into the first feasible pixel around a current pixel, while working in a clockwise direction
+        #move into the first feasible pixel around a current pixel, while working in a clockwise direction ...dirs = 0 to 7
         if (feasible(curr_y+change_y[dirs],curr_x+change_x[dirs])):
             visited[curr_y,curr_x] = 1
             freeman_chain.append(dirs)
             curr_y = curr_y + change_y[dirs]
             curr_x = curr_x + change_x[dirs]
-            testpi[curr_y,curr_x] = 30
+            disjoncteur = abs(change_y[dirs]) + abs(change_x[dirs]) 
+            freemancontour[curr_y,curr_x] = 100
+            #input("change_y " + str(change_y[dirs]) + " change x " + str(change_x[dirs]) + " dirs " + str(dirs) )
             break
-show(testpi)
-  
+show(freemancontour) ## affiche le plot du contour
+lg.debug(freeman_chain) 
