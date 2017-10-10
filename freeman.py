@@ -16,10 +16,10 @@ lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s
 ##### definitions
 path="C:\\Users\\edmon_000\\Desktop\\mldm year 2\\mldm project\\datasource\\"
 
-sample_image = 150 ### the image to test the freeman code
+sample_image = 4 ### the image to test the freeman code
 
-size_x = 28
-size_y = 28
+size_x = 27
+size_y = 27
 totalcells = size_x*size_y
 
 directions = 8
@@ -92,12 +92,19 @@ for x_bw in range(0,size_x):
 show(pixels)
 
 #Find the starting point for the freeman function
+start_x = 0
+start_y = 0
 
 for ii_x in range(0,size_x):
     for ii_y in range(0,size_y):
-        if pixels[ii_x,ii_y] == 255:
+        if pixels[ii_y,ii_x] == 255:
             start_y = ii_y
             start_x = ii_x
+            break
+    else:
+        continue
+    break
+
 curr_x = start_x
 curr_y = start_y
 
