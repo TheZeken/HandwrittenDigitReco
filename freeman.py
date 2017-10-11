@@ -14,7 +14,7 @@ lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s
 
 
 ##### definitions
-path="C:\\Users\\edmon_000\\Desktop\\mldm year 2\\mldm project\\datasource\\"
+path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"
 
 sample_image = 4 ### the image to test the freeman code
 
@@ -109,8 +109,8 @@ show(pixels)
 start_x = 0
 start_y = 0
 
-for ii_x in range(0,size_x):
-    for ii_y in range(0,size_y):
+for ii_y in range(0,size_y):
+    for ii_x in range(0,size_x):
         if pixels[ii_y,ii_x] == 255:
             start_y = ii_y
             start_x = ii_x
