@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 """
 Created on Mon Oct  2 08:37:43 2017
@@ -10,16 +11,23 @@ import struct
 import numpy as np
 import logging as lg
 
-lg.basicConfig(level=lg.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+#%%
+# Database settings to upload freeman codes
+import pymysql
+import pymysql.cursors
 
-##### definitions
+# Connect to the database.
+conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
+
+sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,%s)"
+
+#%%
+# definitions
 path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"
 
-sample_image = 4 ### the image to test the freeman code
-
-size_x = 27
-size_y = 27
+size_x = 28
+size_y = 28
 totalcells = size_x*size_y
 
 directions = 8
@@ -41,11 +49,11 @@ we use 0:[-1,0] (up) as the current starting point
 change_y    =   [-1,-1,0,1,1, 1, 0, -1]
 change_x    =   [0,1,1,1,0,-1,-1, -1]
 
-start_x = 0
-start_y = 0
 
-freeman_chain = []
+#%%
+#Definition functions
 
+#Read the MNIST dataset
 def read(dataset = "training", path=path):
     """
     Python function for importing the MNIST data set.  It returns an iterator
@@ -75,6 +83,27 @@ def read(dataset = "training", path=path):
     # Create an iterator which returns each image in turn
     for i in range(len(lbl)):
         yield get_img(i)
+        
+# this is to test whether the next consecutive pixel is a contour or not, as we want to move into a border pixel
+def iscontour(y,x):
+    iscontour = False
+    global change_y,change_x,pixels
+    for (i, delta_x) in enumerate(change_x):
+            delta_y = change_y[i]         
+            # i am modding %2=0 because this selects only square adjacent directions and not corner directions. corners = merde*
+            # Add the limit with x and y < 27 to avoid to go through the limit of the image
+            if y+delta_y <size_y and x+delta_x < size_x and pixels[y+delta_y,x+delta_x] == 0 and i%2==0:
+                iscontour = True
+                break  # as long as there is at least 1 adjacent white pixel then this pixel is a contour
+    return iscontour
+
+# this is to see if the next pixel to be moved into is feasible
+def feasible (y,x):
+        global pixels,visited
+        # if the next pixel (as computed by the dir) is black, contour and not visited
+        if pixels[y,x] == 255 and iscontour(y,x) and visited[y,x] != 1:
+            return True
+        return False
 
 def show(image):
     """
@@ -89,9 +118,14 @@ def show(image):
     ax.xaxis.set_ticks_position('top')
     ax.yaxis.set_ticks_position('left')
     pyplot.show()
-    
+
+#%%
+sample_image =  4663### the image to test the freeman code
+
 training_data = list(read(dataset="training", path=path))
 lg.debug(len(training_data))
+
+#for k in range(1001,5000):
 label,pixels = training_data[sample_image]
 lg.debug(label)
 lg.debug(pixels.shape)
@@ -104,7 +138,7 @@ for x_bw in range(0,size_x):
             pixels[x_bw,y_bw] = 255              
 #
 show(pixels)
-
+#%%
 #Find the starting point for the freeman function
 start_x = 0
 start_y = 0
@@ -144,30 +178,8 @@ this next pixel in question:
 3.create a grid of visited pixels so that we don't back track accidentally
 """
 
-# this is to test whether the next consecutive pixel is a contour or not, as we want to move into a border pixel
-def iscontour(y,x):
-    iscontour = False
-    global change_y,change_x,pixels
-    for (i, delta_x) in enumerate(change_x):
-            delta_y = change_y[i]
-            
-            # i am modding %2=0 because this selects only square adjacent directions and not corner directions. corners = merde
-            if pixels[y+delta_y,x+delta_x] == 0 and i%2==0:
-                iscontour = True
-                break  # as long as there is at least 1 adjacent white pixel then this pixel is a contour
-    return iscontour
-
-# this is to see if the next pixel to be moved into is feasible
-def feasible (y,x):
-        global pixels,visited
-        
-        # if the next pixel (as computed by the dir) is black, contour and not visited
-        if pixels[y,x] == 255 and iscontour(y,x) and visited[y,x] != 1:
-            return True
-        return False
-    
-stop = False
-ot = ""
+freeman_chain = []
+freeman_chain_str=""
 
 disjoncteur = 1
 #si on trouve qu'on a dépassé plusque 1 iteration sans bouger, le disjoncteur reste a 0, et la boucle s'arrete
@@ -178,6 +190,7 @@ while disjoncteur:
         if (feasible(curr_y+change_y[dirs],curr_x+change_x[dirs])):
             visited[curr_y,curr_x] = 1
             freeman_chain.append(dirs)
+            freeman_chain_str +=str(dirs)
             curr_y = curr_y + change_y[dirs]
             curr_x = curr_x + change_x[dirs]
             disjoncteur = abs(change_y[dirs]) + abs(change_x[dirs]) 
@@ -185,4 +198,13 @@ while disjoncteur:
             #input("change_y " + str(change_y[dirs]) + " change x " + str(change_x[dirs]) + " dirs " + str(dirs) )
             break
 show(freemancontour) ## affiche le plot du contour
-lg.debug(freeman_chain) 
+print("freeman_chain = ",freeman_chain)
+print(len(freeman_chain))
+print("freeman_chain_str = " ,freeman_chain_str)
+label_int = int(label)
+
+#%%
+#Add to the database
+#with conn.cursor() as cursor:
+  #  cursor.execute(sql_add_freeman,(freeman_chain_str,label_int)) #We execute our SQL request
+   # conn.commit()
