@@ -18,13 +18,15 @@ import pymysql
 import pymysql.cursors
 
 # Connect to the database.
-conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
-
-sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,%s)"
+#conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
+#
+#sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,%s)"
 
 #%%
 # definitions
-path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"
+#path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"
+
+path = "../"
 
 size_x = 28
 size_y = 28
@@ -92,7 +94,7 @@ def iscontour(y,x):
             delta_y = change_y[i]         
             # i am modding %2=0 because this selects only square adjacent directions and not corner directions. corners = merde*
             # Add the limit with x and y < 27 to avoid to go through the limit of the image
-            if y+delta_y <size_y and x+delta_x < size_x and pixels[y+delta_y,x+delta_x] == 0 and i%2==0:
+            if x==0 or x==size_x-1 or y==0 or y==size_y-1 or ( y+delta_y <size_y and x+delta_x < size_x and pixels[y+delta_y,x+delta_x] == 0 and i%2==0):
                 iscontour = True
                 break  # as long as there is at least 1 adjacent white pixel then this pixel is a contour
     return iscontour
@@ -101,7 +103,7 @@ def iscontour(y,x):
 def feasible (y,x):
         global pixels,visited
         # if the next pixel (as computed by the dir) is black, contour and not visited
-        if pixels[y,x] == 255 and iscontour(y,x) and visited[y,x] != 1:
+        if y!=-1 and x!=-1 and y!=size_y and x!=size_x and pixels[y,x] == 255 and iscontour(y,x) and visited[y,x] != 1:
             return True
         return False
 
@@ -120,7 +122,8 @@ def show(image):
     pyplot.show()
 
 #%%
-sample_image =  4663### the image to test the freeman code
+sample_image =  4663
+### the image to test the freeman code
 
 training_data = list(read(dataset="training", path=path))
 lg.debug(len(training_data))
