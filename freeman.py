@@ -207,6 +207,17 @@ print("freeman_chain_str = " ,freeman_chain_str)
 label_int = int(label)
 
 #%%
+#freeman_hist = np.zeros(directions)
+#for i in freeman_chain:
+#    freeman_hist[i] += 1
+#print(freeman_hist)
+#
+#from matplotlib import pyplot                
+#
+#freeman_hist, bins, patches = pyplot.hist(freeman_chain)
+#pyplot.show()
+#print("freeman_hist = ", freeman_hist)
+#%%
 #Add to the database
 #with conn.cursor() as cursor:
   #  cursor.execute(sql_add_freeman,(freeman_chain_str,label_int)) #We execute our SQL request
