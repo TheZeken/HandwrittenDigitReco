@@ -18,15 +18,12 @@ import pymysql
 import pymysql.cursors
 
 # Connect to the database.
-#conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
-#
-#sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,%s)"
+conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
+sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,%s)"
 
 #%%
 # definitions
-#path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"
-
-path = "../"
+path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"
 
 size_x = 28
 size_y = 28
@@ -128,7 +125,7 @@ sample_image =  4663
 training_data = list(read(dataset="training", path=path))
 lg.debug(len(training_data))
 
-#for k in range(1001,5000):
+#for k in range(4663,7000):
 label,pixels = training_data[sample_image]
 lg.debug(label)
 lg.debug(pixels.shape)
@@ -220,5 +217,5 @@ label_int = int(label)
 #%%
 #Add to the database
 #with conn.cursor() as cursor:
-  #  cursor.execute(sql_add_freeman,(freeman_chain_str,label_int)) #We execute our SQL request
-   # conn.commit()
+ #   cursor.execute(sql_add_freeman,(freeman_chain_str,label_int)) #We execute our SQL request
+  #  conn.commit()
