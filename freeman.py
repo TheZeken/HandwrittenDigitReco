@@ -18,12 +18,12 @@ import pymysql
 import pymysql.cursors
 
 # Connect to the database.
-conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
-sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,%s)"
+#conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
+#sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,%s)"
 
 #%%
 # definitions
-path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"
+path="../"
 
 size_x = 28
 size_y = 28
@@ -119,7 +119,7 @@ def show(image):
     pyplot.show()
 
 #%%
-sample_image =  4663
+sample_image =  6
 ### the image to test the freeman code
 
 training_data = list(read(dataset="training", path=path))
@@ -182,21 +182,25 @@ freeman_chain = []
 freeman_chain_str=""
 
 disjoncteur = 1
+last_dir = 4
 #si on trouve qu'on a dépassé plusque 1 iteration sans bouger, le disjoncteur reste a 0, et la boucle s'arrete
 while disjoncteur:
     disjoncteur = 0 
     for dirs in range(0,directions):
         #move into the first feasible pixel around a current pixel, while working in a clockwise direction ...dirs = 0 to 7
-        if (feasible(curr_y+change_y[dirs],curr_x+change_x[dirs])):
+        
+        if (feasible(curr_y+change_y[(dirs + last_dir - 4)%8 ],curr_x+change_x[(dirs + last_dir - 4)%8 ])):
             visited[curr_y,curr_x] = 1
-            freeman_chain.append(dirs)
-            freeman_chain_str +=str(dirs)
-            curr_y = curr_y + change_y[dirs]
-            curr_x = curr_x + change_x[dirs]
-            disjoncteur = abs(change_y[dirs]) + abs(change_x[dirs]) 
+            freeman_chain.append((dirs + last_dir - 4)%8 )
+            freeman_chain_str +=str((dirs + last_dir - 4)%8 )
+            curr_y = curr_y + change_y[(dirs + last_dir - 4)%8 ]
+            curr_x = curr_x + change_x[(dirs + last_dir - 4)%8 ]
+            disjoncteur = abs(change_y[(dirs + last_dir - 4)%8 ]) + abs(change_x[(dirs + last_dir - 4)%8 ]) 
             freemancontour[curr_y,curr_x] = 100
+            last_dir = (dirs + last_dir - 4)%8 
             #input("change_y " + str(change_y[dirs]) + " change x " + str(change_x[dirs]) + " dirs " + str(dirs) )
             break
+    
 show(freemancontour) ## affiche le plot du contour
 print("freeman_chain = ",freeman_chain)
 print(len(freeman_chain))
