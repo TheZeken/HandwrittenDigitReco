@@ -6,7 +6,6 @@ Created on Tue Oct 17 19:05:03 2017
 @author: mathieu
 """
 
-import freeman
 import numpy as np
 
 #print("freeman_chain = ",freeman_chain)

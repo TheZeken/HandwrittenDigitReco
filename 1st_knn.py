@@ -8,6 +8,7 @@ First version of the knn
 """
 import math
 import operator
+import numpy as np
 
 #%%
 #Import data and create histograms
@@ -53,14 +54,47 @@ with conn.cursor() as cursor:
                 
     
 #%%
-# Define the distance used in our knn
-
+# Define the euclidean distance
 def euclideanDistance(instance1, instance2, length):
     distance = 0
-    print(length)
+    #print(length)
     for x in range(length):
         distance += pow((instance1[x] - instance2[x]), 2)
     return math.sqrt(distance)
+
+
+#%%
+# Define the edit distance
+def levenshtein(chaine1, chaine2):
+    
+    dist = np.zeros((len(chaine1)+1,len(chaine2)+1))
+    for i in range(len(chaine1)+1):
+        dist[i, 0] = i
+    for j in range(len(chaine2)+1):
+        dist[0, j] = j
+    for i in range(1,len(chaine1)+1):
+        for j in range(1,len(chaine2)+1):
+            if chaine1[i-1] == chaine2[j-1]:
+                cost = 0
+            elif (chaine2[j-1] - chaine1[i-1]) %8 == 1:
+                cost = 0.5
+            elif (chaine2[j-1] - chaine1[i-1]) %8 == 2:
+                cost = 1
+            elif (chaine2[j-1] - chaine1[i-1]) %8 == 3:
+                cost = 1.5
+            elif (chaine2[j-1] - chaine1[i-1]) %8 == 4:
+                cost = 2
+            elif (chaine2[j-1] - chaine1[i-1]) %8 == 5:
+                cost = 1.5
+            elif (chaine2[j-1] - chaine1[i-1]) %8 == 6:
+                cost = 1
+            elif (chaine2[j-1] - chaine1[i-1]) %8 == 7:
+                cost = 0.5
+            dist[i,j] = min(dist[i-1, j]+1, dist[i, j-1]+1, dist[i-1, j-1]+cost)
+    
+    print(dist)
+    return dist[len(chaine1),len(chaine2)]
+
 
 #%%
 # returns k most similar neighbors from the training set 
@@ -86,7 +120,7 @@ def getResponse(neighbors):
 			classVotes[response] += 1
 		else:
 			classVotes[response] = 1
-	sortedVotes = sorted(classVotes.iteritems(), key=operator.itemgetter(1), reverse=True)
+	sortedVotes = sorted(classVotes.items(), key=operator.itemgetter(1), reverse=True)
 	return sortedVotes[0][0]
 
 #%%
@@ -98,18 +132,21 @@ def getAccuracy(testSet, predictions):
 			correct += 1
 	return (correct/float(len(testSet))) * 100.0
 
+#%%
+# Change the dataframe into a list
+list_train = df_train.values.tolist()
+list_test = df_test.values.tolist()
 
-#%
+#%%
 #Main function
 
+k = 4
 # generate predictions
 predictions=[]
-
-k = 3
-for x in range(len(df_test)):
-	neighbors = getNeighbors(df_train, df_test[x], k)
+for x in range(len(list_test)):
+	neighbors = getNeighbors(list_train, list_test[x], k)
 	result = getResponse(neighbors)
 	predictions.append(result)
-	print('> predicted=' + repr(result) + ', actual=' + repr(df_test[x][-1]))
-accuracy = getAccuracy(df_test, predictions)
-print('Accuracy: ' + repr(accuracy) + '%')
+	#print('> predicted=' + repr(result) + ', actual=' + repr(list_test[x][-1]))
+accuracy = getAccuracy(list_test, predictions)
+print('Accuracy: ' + repr(accuracy) + '% for k ='+repr(k))
