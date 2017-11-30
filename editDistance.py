@@ -37,9 +37,11 @@ def levenshtein(chaine1, chaine2):
                 cost = 0.5
             dist[i,j] = min(dist[i-1, j]+1, dist[i, j-1]+1, dist[i-1, j-1]+cost)
     
-    print(dist)
+    print(len(chaine1))
+    print(len(chaine2))
     return dist[len(chaine1),len(chaine2)]
 
-freeman_ex1 = [0,4,2,1,2]
+freeman_ex1 = [0,4,2,1,2.2]
 freeman_ex2 = [0,1,0,1,2]            
 print(levenshtein(freeman_ex1, freeman_ex2))
+

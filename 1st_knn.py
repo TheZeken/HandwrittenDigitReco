@@ -9,26 +9,46 @@ First version of the knn
 import math
 import operator
 import numpy as np
-
-#%%
-#Import data and create histograms
-# Database settings to downloads freeman codes
+import time
 import pymysql
 import pymysql.cursors
 import pandas as pd
 
+#%%
+# Database settings to downloads freeman codes
 # Connect to the database.
 conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
 sql_get_freeman = "SELECT `freeman`,`label` FROM `freeman_number`"
+
+sql_add_results = "INSERT INTO `knn_results` (`nb_train`, `nb_test`, `k_neighbours`, `accuracy`, `preprocess`, `distance`, `compute_time`) VALUES (%s,%s,%s,%s,%s,%s,%s)"
 #%%
 #Give the histograms given a str
+#Usefull only if the euclidean distance is used
 def hist(string):
     list_str = list(string)
     values_hist=[0,0,0,0,0,0,0,0]
     for i in list_str:
         values_hist[int(i)] +=1
     return values_hist
-
+#%% Remove outliers regarding their freeman length
+def removeOutliers(freeman):
+    if len(freeman) > 90:
+        return True
+    elif len(freeman) < 10:
+        return True
+    else:
+        return False
+#%% 
+#Remove Nan from a list
+# Usefull for Edit Distance
+def removeNan(chaine_):
+    chaine1 = np.array([]).tolist()
+    for i in range(len(chaine_)):
+        if math.isnan(chaine_[i]):
+            break
+        else:
+            chaine1.append(chaine_[i])
+    return chaine1
 #%%
 with conn.cursor() as cursor:
     cursor.execute(sql_get_freeman) #We execute our SQL request
@@ -39,22 +59,54 @@ with conn.cursor() as cursor:
     
     cpt=0
     
+#%%
+# ------------------------------ Euclidean DISTANCE ---------------------------
+#Comment this part if Edit distance is used   
+
+    #Histograms
     for row in cursor:
         values_hist=[]
         
-        if cpt < 6000:
+        if cpt < 1000:
             cpt +=1
             values_hist = hist(row[0])
             df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
             df_train = df_train.append(df2.T)
-        else:
+        elif cpt>=1000 and cpt < 1100:
+            cpt +=1
             values_hist = hist(row[0])
             df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
             df_test = df_test.append(df2.T)
-                
-    
+          
+    # 100 - 110/120   | 1000/1100 - 1100/1120 | 2000/2100 - 2100/2120
+
 #%%
-# Define the euclidean distance
+# ----------------------------------- EDIT DISTANCE ---------------------------
+#Comment this part if euclidean distance is used       
+    for row in cursor:        
+        if cpt >=2000 and cpt < 2100:
+            cpt +=1
+            values =[int(i) for i in row[0]]
+            if not(removeOutliers(values)):
+                values.append(row[1])
+                df_train = df_train.append([pd.DataFrame(values).T])
+            
+        elif cpt >=2100 and cpt < 2120:
+            cpt +=1
+            values =[int(i) for i in row[0]]
+            if not(removeOutliers(values)):
+                values.append(row[1])
+                df_test = df_test.append([pd.DataFrame(values).T])
+        else:
+            cpt +=1
+                
+ 
+#%%
+#-----------------------------------Change the dataframes into list------------
+list_train = df_train.values.tolist()
+list_test = df_test.values.tolist()
+#%%
+# -----------------------------------Define the euclidean distance-------------
 def euclideanDistance(instance1, instance2, length):
     distance = 0
     #print(length)
@@ -64,9 +116,8 @@ def euclideanDistance(instance1, instance2, length):
 
 
 #%%
-# Define the edit distance
+#----------------------------------- Define the edit distance------------------
 def levenshtein(chaine1, chaine2):
-    
     dist = np.zeros((len(chaine1)+1,len(chaine2)+1))
     for i in range(len(chaine1)+1):
         dist[i, 0] = i
@@ -91,16 +142,16 @@ def levenshtein(chaine1, chaine2):
             elif (chaine2[j-1] - chaine1[i-1]) %8 == 7:
                 cost = 0.5
             dist[i,j] = min(dist[i-1, j]+1, dist[i, j-1]+1, dist[i-1, j-1]+cost)
-    
-    print(dist)
     return dist[len(chaine1),len(chaine2)]
 
 
-#%%
+#%% 
+# ----------------------- Get Neighbors only for euclidean distance -----------
 # returns k most similar neighbors from the training set 
 def getNeighbors(trainingSet, testInstance, k):
     distances = []
     length = len(testInstance)-1
+                
     for x in range(len(trainingSet)):
         dist = euclideanDistance(testInstance, trainingSet[x], length)
         distances.append((trainingSet[x], dist))
@@ -111,7 +162,23 @@ def getNeighbors(trainingSet, testInstance, k):
     return neighbors
 
 #%%
-# Give the label which is the most common in our neighbours
+# ----------------------- Get Neighbors only for Edit distance ----------------
+# returns k most similar neighbors from the training set 
+
+def getNeighbors(trainingSet, testInstance, k):
+    distances = []
+    testInstance = removeNan(testInstance)
+    for x in range(len(trainingSet)):
+        chaine2 = removeNan(trainingSet[x])
+        dist = levenshtein(testInstance, chaine2)
+        distances.append((chaine2, dist))
+    distances.sort(key=operator.itemgetter(1))
+    neighbors = []
+    for x in range(k):
+        neighbors.append(distances[x][0])
+    return neighbors
+#%%
+# ----------Give the label which is the most common in our neighbours----------
 def getResponse(neighbors):
 	classVotes = {}
 	for x in range(len(neighbors)):
@@ -124,29 +191,36 @@ def getResponse(neighbors):
 	return sortedVotes[0][0]
 
 #%%
-# return the accuracy in %
+# -----------------------------------Return the accuracy in % -----------------
 def getAccuracy(testSet, predictions):
-	correct = 0
-	for x in range(len(testSet)):
-		if testSet[x][-1] is predictions[x]:
-			correct += 1
-	return (correct/float(len(testSet))) * 100.0
+    correct = 0
+    for x in range(len(testSet)):
+        testSet_no_Nan = removeNan(testSet[x])
+        if testSet_no_Nan[-1] == predictions[x]:
+            correct += 1
+    return (correct/float(len(testSet))) * 100.0
 
 #%%
-# Change the dataframe into a list
-list_train = df_train.values.tolist()
-list_test = df_test.values.tolist()
+#-----------------------------------Main function------------------------------
 
-#%%
-#Main function
-
-k = 4
-# generate predictions
-predictions=[]
-for x in range(len(list_test)):
-	neighbors = getNeighbors(list_train, list_test[x], k)
-	result = getResponse(neighbors)
-	predictions.append(result)
-	#print('> predicted=' + repr(result) + ', actual=' + repr(list_test[x][-1]))
-accuracy = getAccuracy(list_test, predictions)
-print('Accuracy: ' + repr(accuracy) + '% for k ='+repr(k))
+#k = 1
+for k in range(1,25):
+    #Track run time
+    start=time.time()
+    
+    # generate predictions
+    predictions=[]
+    for x in range(len(list_test)):
+        
+        list_test_no_Nan = removeNan(list_test[x])
+        neighbors = getNeighbors(list_train, list_test_no_Nan, k)
+        result = getResponse(neighbors)
+        predictions.append(result)
+        #End timer and show run time
+        end=time.time()
+        #print('> predicted=' + repr(result) + ', actual=' + repr(list_test_no_Nan[-1]))
+    accuracy = getAccuracy(list_test, predictions)
+    print('Accuracy: ' + repr(accuracy) + '% for k ='+repr(k))
+    with conn.cursor() as cursor:
+        cursor.execute(sql_add_results,(len(list_train),len(list_test),k,repr(accuracy),'Remove outliers where freeman_length<20 && freeman_length>90','levenshtein',end-start)) #We execute our SQL request
+        conn.commit()

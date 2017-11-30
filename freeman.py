@@ -1,4 +1,6 @@
 
+
+
 # -*- coding: utf-8 -*-
 """
 Created on Mon Oct  2 08:37:43 2017
@@ -18,12 +20,12 @@ import pymysql
 import pymysql.cursors
 
 # Connect to the database.
-#conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
-#sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,%s)"
+conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
+sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,%s)"
 
 #%%
 # definitions
-path="../"
+path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"
 
 size_x = 28
 size_y = 28
@@ -125,7 +127,7 @@ sample_image =  6
 training_data = list(read(dataset="training", path=path))
 lg.debug(len(training_data))
 
-#for k in range(4663,7000):
+#for k in range(0,7000):
 label,pixels = training_data[sample_image]
 lg.debug(label)
 lg.debug(pixels.shape)
