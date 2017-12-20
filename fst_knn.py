@@ -13,7 +13,6 @@ import time
 import pymysql
 import pymysql.cursors
 import pandas as pd
-
 #%%
 # Database settings to downloads freeman codes
 # Connect to the database.
@@ -60,53 +59,72 @@ with conn.cursor() as cursor:
     cpt=0
     
 #%%
+
 # ------------------------------ Euclidean DISTANCE ---------------------------
 #Comment this part if Euclidean distance is used   
-
+def get_db_ecl():
+    df_train = pd.DataFrame()
+    #df_test = pd.DataFrame()
+    cpt=0
     #Histograms
-    for row in cursor:
-        values_hist=[]
-        
-        if cpt>=0 and cpt < 1000:
-            cpt +=1
-            values_hist = hist(row[0])
-            df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
-            df_train = df_train.append(df2.T)
-        elif cpt>=1000 and cpt < 1100:
-            cpt +=1
-            values_hist = hist(row[0])
-            df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
-            df_test = df_test.append(df2.T)
-        else:
-            cpt +=1
+    with conn.cursor() as cursor:
+        cursor.execute(sql_get_freeman) #We execute our SQL request
+        conn.commit()
+        for row in cursor:
+            values_hist=[]
             
-    list_train = df_train.values.tolist()
-    list_test = df_test.values.tolist()
+            if cpt>=100 and cpt < 200:
+                cpt +=1
+                values_hist = hist(row[0])
+                df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
+                df_train = df_train.append(df2.T)
+                """
+            elif cpt>=65 and cpt < 1100:
+                cpt +=1
+                values_hist = hist(row[0])
+                df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
+                df_test = df_test.append(df2.T)
+                """
+            else:
+                cpt +=1
+                
+        list_train = df_train.values.tolist()
+        return(list_train)
+        #list_test = df_test.values.tolist()
 
 #%%
 # ----------------------------------- EDIT DISTANCE ---------------------------
-#Comment this part if Edit distance is used       
-    for row in cursor:        
-        if cpt >=600 and cpt < 650:
-            cpt +=1
-            values =[int(i) for i in row[0]]
-            values.append(row[1])
-            df_train = df_train.append([pd.DataFrame(values).T])
+#Comment this part if Edit distance is used
+def get_db_edit():
+    df_train = pd.DataFrame()
+    #df_test = pd.DataFrame()
+    cpt=0
+    #Histograms
+    with conn.cursor() as cursor:
+        cursor.execute(sql_get_freeman) #We execute our SQL request
+        conn.commit()
+        for row in cursor:        
+            if cpt >=600 and cpt < 650:
+                cpt +=1
+                values =[int(i) for i in row[0]]
+                values.append(row[1])
+                df_train = df_train.append([pd.DataFrame(values).T])
+                """
+            elif cpt >=650 and cpt < 700:
+                cpt +=1
+                values =[int(i) for i in row[0]]
+                values.append(row[1])
+                df_test = df_test.append([pd.DataFrame(values).T])"""
+            else:
+                cpt +=1
+        list_train = df_train.values.tolist()
+        return(list_train)
+#list_test = df_test.values.tolist()
             
-        elif cpt >=650 and cpt < 700:
-            cpt +=1
-            values =[int(i) for i in row[0]]
-            values.append(row[1])
-            df_test = df_test.append([pd.DataFrame(values).T])
-        else:
-            cpt +=1
-    list_train = df_train.values.tolist()
-    list_test = df_test.values.tolist()
-                
 #%%
 #-----------------------------------Change the dataframes into list------------
 list_train = df_train.values.tolist()
-list_test = df_test.values.tolist()
+#list_test = df_test.values.tolist()
 #%%
 # -----------------------------------Define the euclidean distance-------------
 def euclideanDistance(instance1, instance2, length):
@@ -120,6 +138,7 @@ def euclideanDistance(instance1, instance2, length):
 #%%
 #----------------------------------- Define the edit distance------------------
 def levenshtein(chaine1, chaine2):
+    cost=0
     dist = np.zeros((len(chaine1)+1,len(chaine2)+1))
     for i in range(len(chaine1)+1):
         dist[i, 0] = i
@@ -162,6 +181,25 @@ def getNeighbors(trainingSet, testInstance, k):
     for x in range(k):
         neighbors.append(distances[x][0])
     return neighbors
+#%% 
+# ----------------------- Get Neighbors only for euclidean distance -----------
+# returns k most similar neighbors from the training set 
+"""
+FOR PRODUCTION
+"""
+def getNeighbors_ecl(list_train,testInstance, k):
+    distances = []
+    testInstance = hist(testInstance)
+    
+    for x in range(len(list_train)):
+        dist = euclideanDistance(testInstance, list_train[x], 1)
+        distances.append((list_train[x], dist))
+    distances.sort(key=operator.itemgetter(1))
+    neighbors = []
+    for x in range(k):
+        neighbors.append(distances[x][0])
+    return neighbors
+
 
 #%%
 # ----------------------- Get Neighbors only for Edit distance ----------------
@@ -172,6 +210,23 @@ def getNeighbors(trainingSet, testInstance, k):
     testInstance = removeNan(testInstance)
     for x in range(len(trainingSet)):
         chaine2 = removeNan(trainingSet[x])
+        dist = levenshtein(testInstance, chaine2)
+        distances.append((chaine2, dist))
+    distances.sort(key=operator.itemgetter(1))
+    neighbors = []
+    for x in range(k):
+        neighbors.append(distances[x][0])
+    return neighbors
+
+#%%
+# ----------------------- Get Neighbors only for Edit distance ----------------
+# returns k most similar neighbors from the training set 
+""" FOR PRODUCION"""
+def getNeighbors_edit(list_train,testInstance, k):
+    distances = []
+    print(len(list_train))
+    for x in range(len(list_train)):
+        chaine2 = removeNan(list_train[x])
         dist = levenshtein(testInstance, chaine2)
         distances.append((chaine2, dist))
     distances.sort(key=operator.itemgetter(1))
@@ -204,7 +259,7 @@ def getAccuracy(testSet, predictions):
 
 #%%
 #-----------------------------------Main function------------------------------
-
+"""
 #k = 1
 for k in range(1,25):
     #Track run time
@@ -223,6 +278,7 @@ for k in range(1,25):
         #print('> predicted=' + repr(result) + ', actual=' + repr(list_test_no_Nan[-1]))
     accuracy = getAccuracy(list_test, predictions)
     print('Accuracy: ' + repr(accuracy) + '% for k ='+repr(k))
-    with conn.cursor() as cursor:
-        cursor.execute(sql_add_results,(len(list_train),len(list_test),k,repr(accuracy),'None','levenshtein',end-start,4)) #We execute our SQL request
-        conn.commit()
+    #with conn.cursor() as cursor:
+     #   cursor.execute(sql_add_results,(len(list_train),len(list_test),k,repr(accuracy),'None','levenshtein',end-start,4)) #We execute our SQL request
+      #  conn.commit()
+"""
