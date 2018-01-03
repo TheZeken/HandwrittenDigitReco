@@ -213,7 +213,7 @@ def get_freeman(pixels_):
     print("freeman_chain = ",freeman_chain)
     print(len(freeman_chain))
     print("freeman_chain_str = " ,freeman_chain_str)
-    return freeman_chain
+    return freeman_chain,freeman_chain_str
     #label_int = int(label)
 
 #%%

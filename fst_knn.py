@@ -73,18 +73,11 @@ def get_db_ecl():
         for row in cursor:
             values_hist=[]
             
-            if cpt>=100 and cpt < 200:
+            if cpt <= 100:
                 cpt +=1
                 values_hist = hist(row[0])
                 df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
                 df_train = df_train.append(df2.T)
-                """
-            elif cpt>=65 and cpt < 1100:
-                cpt +=1
-                values_hist = hist(row[0])
-                df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
-                df_test = df_test.append(df2.T)
-                """
             else:
                 cpt +=1
                 
@@ -104,17 +97,11 @@ def get_db_edit():
         cursor.execute(sql_get_freeman) #We execute our SQL request
         conn.commit()
         for row in cursor:        
-            if cpt >=600 and cpt < 650:
+            if cpt <= 100:
                 cpt +=1
                 values =[int(i) for i in row[0]]
                 values.append(row[1])
                 df_train = df_train.append([pd.DataFrame(values).T])
-                """
-            elif cpt >=650 and cpt < 700:
-                cpt +=1
-                values =[int(i) for i in row[0]]
-                values.append(row[1])
-                df_test = df_test.append([pd.DataFrame(values).T])"""
             else:
                 cpt +=1
         list_train = df_train.values.tolist()

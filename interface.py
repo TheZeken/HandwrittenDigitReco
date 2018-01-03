@@ -14,6 +14,7 @@ import scipy.misc
 
 from fst_knn import *
 from freeman import *
+from functions import *
 
 from skimage.transform import resize
 
@@ -21,17 +22,22 @@ from tkinter import *
 import skimage.io as ski_io
 
 fen = Tk()
+fen.title("Digit Recognition Tool")
 # frame 1
 Frame1 = Frame(fen, borderwidth=2, relief=GROOVE)
 Frame1.pack(side=LEFT, padx=30, pady=30)
 
 # frame 2
 Frame2 = Frame(fen, borderwidth=2, relief=GROOVE)
-Frame2.pack(side=LEFT, padx=10, pady=10)
+Frame2.pack(side=LEFT, padx=4, pady=10)
 
-# frame 3
+# frame 1-1
 Frame1_1= Frame(Frame1, borderwidth=0, relief=GROOVE)
 Frame1_1.pack(side=BOTTOM, padx=2, pady=2)
+
+# frame 3
+Frame3 = Frame(fen, borderwidth=2, relief=GROOVE)
+Frame3.pack(side=LEFT, padx=10, pady=10)
 
 img = np.zeros((WIDTH_CANVAS,HEIGHT_CANVAS))
 
@@ -61,17 +67,14 @@ def predict_can(fen):
                 img_[int(i/4)-1,int(j/4)-1] = 255
              
     scipy.misc.imsave('outfile.jpg', img_)  
-    freeman_chain_str = get_freeman(img_)
+    freeman_chain,freeman_chain_str = get_freeman(img_)
 
     if str(value.get()) == "both":
-        label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain_str)) + "\n Prediction Euclidean : "+ str(predict_ecl(freeman_chain_str)))
-    #print("prediction Edit : ",predict_edit(freeman_chain_str))    
-    #print("prediction Euclidean : ",predict_ecl(freeman_chain_str))
-    
-    
-    
-    
-
+        label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain)) + "\n Prediction Euclidean : "+ str(predict_ecl(freeman_chain)))
+    elif str(value.get()) == "ecl":
+        label_pred.config(text = " Prediction Euclidean : "+ str(predict_ecl(freeman_chain)))
+    elif str(value.get()) == "edit":
+        label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain)))
 
 #%%
 
@@ -120,13 +123,42 @@ label_pred = Label(Frame1_1)
 label_pred.pack()
 
 #%%
+#Data Base Module
+clear_db = Button(Frame2, text='Reset Database', borderwidth=2,command= reset_prod_db).pack(side=LEFT)
+clear_db = Button(Frame2, text='Truncate Database', borderwidth=2,command= trunc_prod_db).pack(side=LEFT)
+
+def add_db(val):
+    # Connect to the database.
+    conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
+    SQL_add_canvas = "INSERT INTO `freeman_prod`(`freeman_prod`, `label`) VALUES (%s,%s)"
+        
+    img_ = np.zeros((28,28))
+    global img,value
+    for i in range(0,WIDTH_CANVAS-3):
+        for j in range(0,HEIGHT_CANVAS-3):
+            if img_[int(i/4),int(j/4)] == 0 and img[i,j] == 255 and int(i/4) < 27 and int(j/4) < 27:
+                img_[int(i/4),int(j/4)] = 255
+                img_[int(i/4)+1,int(j/4)+1] = 255
+                img_[int(i/4)-1,int(j/4)-1] = 255
+             
+    scipy.misc.imsave('outfile.jpg', img_)  
+    freeman_chain,freeman_chain_str = get_freeman(img_)
+    
+    with conn.cursor() as cursor:
+        cursor.execute(SQL_add_canvas,(freeman_chain_str,val)) #We execute our SQL request
+        conn.commit()
+    
+    
+
+
+#%%
 buttons=np.zeros(10)
 for ligne in range(2):
     for colonne in range(5):
         if ligne == 0:
-            buttons[ligne+colonne] = Button(Frame2, text='%s' % (ligne+colonne), borderwidth=2).grid(row=ligne, column=colonne)
+            buttons[ligne+colonne] = Button(Frame3, text='%s' % (ligne+colonne), borderwidth=2, command=lambda ligne=ligne, colonne=colonne: add_db(ligne+colonne)).grid(row=ligne, column=colonne)
         else:
-            buttons[5+colonne] = Button(Frame2, text='%s' % (5+colonne), borderwidth=2).grid(row=ligne, column=colonne)
+            buttons[5+colonne] = Button(Frame3, text='%s' % (5+colonne), borderwidth=2,command=lambda colonne=colonne: add_db(5+colonne)).grid(row=ligne, column=colonne)
 #%%
 
 fen.mainloop()
