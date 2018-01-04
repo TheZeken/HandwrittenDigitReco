@@ -19,6 +19,7 @@ from functions import *
 from skimage.transform import resize
 
 from tkinter import *
+from tkinter import messagebox
 import skimage.io as ski_io
 
 fen = Tk()
@@ -26,6 +27,10 @@ fen.title("Digit Recognition Tool")
 # frame 1
 Frame1 = Frame(fen, borderwidth=2, relief=GROOVE)
 Frame1.pack(side=LEFT, padx=30, pady=30)
+
+# frame Frame1_2
+Frame1_2 = Frame(Frame1, borderwidth=2, relief=GROOVE)
+Frame1_2.pack(side=RIGHT, padx=10, pady=10)
 
 # frame 2
 Frame2 = Frame(fen, borderwidth=2, relief=GROOVE)
@@ -38,10 +43,6 @@ Frame2_1.pack(side=BOTTOM, padx=4, pady=10)
 # frame 1-1
 Frame1_1= Frame(Frame1, borderwidth=0, relief=GROOVE)
 Frame1_1.pack(side=BOTTOM, padx=2, pady=2)
-
-# frame 3
-Frame3 = Frame(fen, borderwidth=2, relief=GROOVE)
-Frame3.pack(side=LEFT, padx=10, pady=10)
 
 img = np.zeros((WIDTH_CANVAS,HEIGHT_CANVAS))
 
@@ -125,11 +126,38 @@ clear_btn = Button(Frame1, text='Clear Canvas', borderwidth=2,command= clear_can
 
 label_pred = Label(Frame1_1)
 label_pred.pack()
+#%% Popup for information
+def reset_prod_db_tk():
+    if reset_prod_db():
+        messagebox.showinfo("Information", "The database has been reseted to : Mnist (100)")
+    else:
+        messagebox.showinfo("Information", "Something went wrong during the reset, please try again.")
+
+def trunc_prod_db_tk():
+    if trunc_prod_db():
+        messagebox.showinfo("Information", "The database is now empty")
+    else:
+        messagebox.showinfo("Information", "Something went wrong, please try again.")
+
+def reset_our_prod_db_tk():
+    if reset_our_prod_db():
+        messagebox.showinfo("Information", "The database has been reseted to : Ours ")
+    else:
+        messagebox.showinfo("Information", "Something went wrong during the reset, please try again.")
+        
+def process_db_tk():
+    bina, cpt = process_db()
+    if bina:
+        messagebox.showinfo("Information", str(cpt)+" Irrevelants training example removed")
+    else:
+        messagebox.showinfo("Information", "Something went wrong, please try again.")
 
 #%%
 #Data Base Module
-clear_db = Button(Frame2, text='Reset Database', borderwidth=2,command= reset_prod_db).pack(side=LEFT)
-trunc_db = Button(Frame2, text='Truncate Database', borderwidth=2,command= trunc_prod_db).pack(side=LEFT)
+clear_db = Button(Frame2, text='Get Mnist / Reset DB', borderwidth=2,command= reset_prod_db_tk).pack(side=LEFT)
+trunc_db = Button(Frame2, text='Truncate Database', borderwidth=2,command= trunc_prod_db_tk).pack(side=LEFT)
+our_db = Button(Frame2, text='Get Ours / Reset DB', borderwidth=2,command= reset_our_prod_db_tk).pack(side=LEFT)
+process_db_btn = Button(Frame2, text='Clean DB', borderwidth=2,command= process_db_tk).pack(side=LEFT)
 
 v_e1 = StringVar()
 cross_val_score = Button(Frame2_1, text='Cross Validation score', borderwidth=2,command= lambda: get_cross_val_score(v_e1)).pack(side=BOTTOM)
@@ -168,9 +196,9 @@ buttons=np.zeros(10)
 for ligne in range(2):
     for colonne in range(5):
         if ligne == 0:
-            buttons[ligne+colonne] = Button(Frame3, text='%s' % (ligne+colonne), borderwidth=2, command=lambda ligne=ligne, colonne=colonne: add_db(ligne+colonne)).grid(row=ligne, column=colonne)
+            buttons[ligne+colonne] = Button(Frame1_2, text='%s' % (ligne+colonne), borderwidth=2, command=lambda ligne=ligne, colonne=colonne: add_db(ligne+colonne)).grid(row=ligne, column=colonne)
         else:
-            buttons[5+colonne] = Button(Frame3, text='%s' % (5+colonne), borderwidth=2,command=lambda colonne=colonne: add_db(5+colonne)).grid(row=ligne, column=colonne)
+            buttons[5+colonne] = Button(Frame1_2, text='%s' % (5+colonne), borderwidth=2,command=lambda colonne=colonne: add_db(5+colonne)).grid(row=ligne, column=colonne)
 #%%
 
 fen.mainloop()

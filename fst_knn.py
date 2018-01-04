@@ -96,11 +96,7 @@ def get_db_edit():
         list_train = df_train.values.tolist()
         return(list_train)
 #list_test = df_test.values.tolist()
-            
-#%%
-#-----------------------------------Change the dataframes into list------------
-list_train = df_train.values.tolist()
-#list_test = df_test.values.tolist()
+
 #%%
 # -----------------------------------Define the euclidean distance-------------
 def euclideanDistance(instance1, instance2, length):
@@ -199,7 +195,7 @@ def getResponse(neighbors):
 # -----------------------------------Return the accuracy in % -----------------
 def getAccuracy(testSet, predictions):
     correct = 0
-    #print("length : ",len(testSet))
+    print("length : ",len(testSet))
     for x in range(len(testSet)):
         testSet_no_Nan = removeNan(testSet[x])
         if testSet_no_Nan[-1] == predictions[x]:
