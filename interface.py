@@ -31,6 +31,10 @@ Frame1.pack(side=LEFT, padx=30, pady=30)
 Frame2 = Frame(fen, borderwidth=2, relief=GROOVE)
 Frame2.pack(side=LEFT, padx=4, pady=10)
 
+# frame 2-1
+Frame2_1 = Frame(Frame2, borderwidth=2, relief=GROOVE)
+Frame2_1.pack(side=BOTTOM, padx=4, pady=10)
+
 # frame 1-1
 Frame1_1= Frame(Frame1, borderwidth=0, relief=GROOVE)
 Frame1_1.pack(side=BOTTOM, padx=2, pady=2)
@@ -125,7 +129,12 @@ label_pred.pack()
 #%%
 #Data Base Module
 clear_db = Button(Frame2, text='Reset Database', borderwidth=2,command= reset_prod_db).pack(side=LEFT)
-clear_db = Button(Frame2, text='Truncate Database', borderwidth=2,command= trunc_prod_db).pack(side=LEFT)
+trunc_db = Button(Frame2, text='Truncate Database', borderwidth=2,command= trunc_prod_db).pack(side=LEFT)
+
+v_e1 = StringVar()
+cross_val_score = Button(Frame2_1, text='Cross Validation score', borderwidth=2,command= lambda: get_cross_val_score(v_e1)).pack(side=BOTTOM)
+e1 = Entry(Frame2_1,textvariable = v_e1).pack(side=BOTTOM)
+
 
 def add_db(val):
     # Connect to the database.
@@ -147,6 +156,9 @@ def add_db(val):
     with conn.cursor() as cursor:
         cursor.execute(SQL_add_canvas,(freeman_chain_str,val)) #We execute our SQL request
         conn.commit()
+    global train_list_edit,train_list_ecl
+    train_list_edit = get_db_edit()
+    train_list_ecl = get_db_ecl()
     
     
 

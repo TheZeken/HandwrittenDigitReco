@@ -17,7 +17,7 @@ import pandas as pd
 # Database settings to downloads freeman codes
 # Connect to the database.
 conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
-sql_get_freeman = "SELECT `freeman`,`label` FROM `freeman_number`"
+sql_get_freeman = "SELECT `freeman_prod`,`label` FROM `freeman_prod`"
 
 sql_add_results = "INSERT INTO `knn_results` (`nb_train`, `nb_test`, `k_neighbours`, `accuracy`, `preprocess`, `distance`, `compute_time`,`nb_dataset`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
 #%%
@@ -26,7 +26,7 @@ sql_add_results = "INSERT INTO `knn_results` (`nb_train`, `nb_test`, `k_neighbou
 def hist(string):
     list_str = list(string)
     values_hist=[0,0,0,0,0,0,0,0]
-    for i in list_str:
+    for i in list_str[0:-1]:
         values_hist[int(i)] +=1
     return values_hist
 #%% Remove outliers regarding their freeman length
@@ -65,21 +65,15 @@ with conn.cursor() as cursor:
 def get_db_ecl():
     df_train = pd.DataFrame()
     #df_test = pd.DataFrame()
-    cpt=0
     #Histograms
     with conn.cursor() as cursor:
         cursor.execute(sql_get_freeman) #We execute our SQL request
         conn.commit()
         for row in cursor:
             values_hist=[]
-            
-            if cpt <= 100:
-                cpt +=1
-                values_hist = hist(row[0])
-                df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
-                df_train = df_train.append(df2.T)
-            else:
-                cpt +=1
+            values_hist = hist(row[0])
+            df2 = pd.DataFrame([[values_hist[0]],[values_hist[1]],[values_hist[2]],[values_hist[3]],[values_hist[4]],[values_hist[5]],[values_hist[6]],[values_hist[7]],[row[1]]])
+            df_train = df_train.append(df2.T)
                 
         list_train = df_train.values.tolist()
         return(list_train)
@@ -91,19 +85,14 @@ def get_db_ecl():
 def get_db_edit():
     df_train = pd.DataFrame()
     #df_test = pd.DataFrame()
-    cpt=0
     #Histograms
     with conn.cursor() as cursor:
         cursor.execute(sql_get_freeman) #We execute our SQL request
         conn.commit()
         for row in cursor:        
-            if cpt <= 100:
-                cpt +=1
-                values =[int(i) for i in row[0]]
-                values.append(row[1])
-                df_train = df_train.append([pd.DataFrame(values).T])
-            else:
-                cpt +=1
+            values =[int(i) for i in row[0]]
+            values.append(row[1])
+            df_train = df_train.append([pd.DataFrame(values).T])
         list_train = df_train.values.tolist()
         return(list_train)
 #list_test = df_test.values.tolist()
@@ -152,22 +141,6 @@ def levenshtein(chaine1, chaine2):
             dist[i,j] = min(dist[i-1, j]+1, dist[i, j-1]+1, dist[i-1, j-1]+cost)
     return dist[len(chaine1),len(chaine2)]
 
-
-#%% 
-# ----------------------- Get Neighbors only for euclidean distance -----------
-# returns k most similar neighbors from the training set 
-def getNeighbors(trainingSet, testInstance, k):
-    distances = []
-    length = len(testInstance)-1
-                
-    for x in range(len(trainingSet)):
-        dist = euclideanDistance(testInstance, trainingSet[x], length)
-        distances.append((trainingSet[x], dist))
-    distances.sort(key=operator.itemgetter(1))
-    neighbors = []
-    for x in range(k):
-        neighbors.append(distances[x][0])
-    return neighbors
 #%% 
 # ----------------------- Get Neighbors only for euclidean distance -----------
 # returns k most similar neighbors from the training set 
@@ -187,34 +160,22 @@ def getNeighbors_ecl(list_train,testInstance, k):
         neighbors.append(distances[x][0])
     return neighbors
 
-
-#%%
-# ----------------------- Get Neighbors only for Edit distance ----------------
-# returns k most similar neighbors from the training set 
-
-def getNeighbors(trainingSet, testInstance, k):
-    distances = []
-    testInstance = removeNan(testInstance)
-    for x in range(len(trainingSet)):
-        chaine2 = removeNan(trainingSet[x])
-        dist = levenshtein(testInstance, chaine2)
-        distances.append((chaine2, dist))
-    distances.sort(key=operator.itemgetter(1))
-    neighbors = []
-    for x in range(k):
-        neighbors.append(distances[x][0])
-    return neighbors
-
 #%%
 # ----------------------- Get Neighbors only for Edit distance ----------------
 # returns k most similar neighbors from the training set 
 """ FOR PRODUCION"""
-def getNeighbors_edit(list_train,testInstance, k):
+def getNeighbors_edit(list_train,testInstance, k,cross_val=False):
     distances = []
-    print(len(list_train))
+    #print(len(list_train))
     for x in range(len(list_train)):
         chaine2 = removeNan(list_train[x])
-        dist = levenshtein(testInstance, chaine2)
+        if cross_val == False:
+            testInstance = removeNan(testInstance)
+            #print(chaine2[0:-1])
+            dist = levenshtein(testInstance, chaine2[0:-1])
+        elif cross_val == True:
+            testInstance = removeNan(testInstance)
+            dist = levenshtein(testInstance[0:-1], chaine2[0:-1])
         distances.append((chaine2, dist))
     distances.sort(key=operator.itemgetter(1))
     neighbors = []
@@ -238,34 +199,9 @@ def getResponse(neighbors):
 # -----------------------------------Return the accuracy in % -----------------
 def getAccuracy(testSet, predictions):
     correct = 0
+    #print("length : ",len(testSet))
     for x in range(len(testSet)):
         testSet_no_Nan = removeNan(testSet[x])
         if testSet_no_Nan[-1] == predictions[x]:
             correct += 1
     return (correct/float(len(testSet))) * 100.0
-
-#%%
-#-----------------------------------Main function------------------------------
-"""
-#k = 1
-for k in range(1,25):
-    #Track run time
-    start=time.time()
-    
-    # generate predictions
-    predictions=[]
-    for x in range(len(list_test)):
-        
-        list_test_no_Nan = removeNan(list_test[x])
-        neighbors = getNeighbors(list_train, list_test_no_Nan, k)
-        result = getResponse(neighbors)
-        predictions.append(result)
-        #End timer and show run time
-        end=time.time()
-        #print('> predicted=' + repr(result) + ', actual=' + repr(list_test_no_Nan[-1]))
-    accuracy = getAccuracy(list_test, predictions)
-    print('Accuracy: ' + repr(accuracy) + '% for k ='+repr(k))
-    #with conn.cursor() as cursor:
-     #   cursor.execute(sql_add_results,(len(list_train),len(list_test),k,repr(accuracy),'None','levenshtein',end-start,4)) #We execute our SQL request
-      #  conn.commit()
-"""
