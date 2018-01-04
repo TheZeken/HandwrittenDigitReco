@@ -17,7 +17,7 @@ import pandas as pd
 #%%
 # Database settings to downloads freeman codes
 # Connect to the database.
-conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
+conn = pymysql.connect(db='ml_db', user='root', passwd='23Octobre', host='localhost')
 sql_get_freeman = "SELECT `freeman`,`label` FROM `freeman_number`"
 
 sql_add_results = "INSERT INTO `knn_results` (`nb_train`, `nb_test`, `k_neighbours`, `accuracy`, `preprocess`, `distance`, `compute_time`,`nb_dataset`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
