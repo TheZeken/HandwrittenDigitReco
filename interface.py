@@ -23,6 +23,8 @@ from tkinter import *
 from tkinter import messagebox
 import skimage.io as ski_io
 
+from random import  randint
+
 fen = Tk()
 fen.title("Digit Recognition Tool")
 # frame 1
@@ -46,6 +48,7 @@ Frame1_1= Frame(Frame1, borderwidth=0, relief=GROOVE)
 Frame1_1.pack(side=BOTTOM, padx=2, pady=2)
 
 img = np.zeros((WIDTH_CANVAS,HEIGHT_CANVAS))
+img_game = np.zeros((WIDTH_CANVAS,HEIGHT_CANVAS))
 
 train_list_edit = get_db_edit()
 train_list_ecl = get_db_ecl()
@@ -64,54 +67,105 @@ def predict_edit(freeman_chain_str,db):
     result = getResponse(neighbors)
     return result
     
-def predict_can(fen,db):
+def predict_can(fen,db,can):
+    print(can)
     img_ = np.zeros((28,28))
-    global img,value
-    for i in range(0,WIDTH_CANVAS-3):
-        for j in range(0,HEIGHT_CANVAS-3):
-            if img_[int(i/4),int(j/4)] == 0 and img[i,j] == 255 and int(i/4) < 27 and int(j/4) < 27:
-                img_[int(i/4),int(j/4)] = 255
-                img_[int(i/4)+1,int(j/4)+1] = 255
-                img_[int(i/4)-1,int(j/4)-1] = 255
+    global img,value,img_game
+    
+    if str(can) == ".!toplevel.!frame.c1":
+        for i in range(0,WIDTH_CANVAS-3):
+            for j in range(0,HEIGHT_CANVAS-3):
+                if img_[int(i/4),int(j/4)] == 0 and img_game[i,j] == 255 and int(i/4) < 27 and int(j/4) < 27:
+                    img_[int(i/4),int(j/4)] = 255
+                    img_[int(i/4)+1,int(j/4)+1] = 255
+                    img_[int(i/4)-1,int(j/4)-1] = 255        
+    else:
+        for i in range(0,WIDTH_CANVAS-3):
+            for j in range(0,HEIGHT_CANVAS-3):
+                if img_[int(i/4),int(j/4)] == 0 and img[i,j] == 255 and int(i/4) < 27 and int(j/4) < 27:
+                    img_[int(i/4),int(j/4)] = 255
+                    img_[int(i/4)+1,int(j/4)+1] = 255
+                    img_[int(i/4)-1,int(j/4)-1] = 255
              
     scipy.misc.imsave('outfile.jpg', img_)  
     freeman_chain,freeman_chain_str = get_freeman(img_)
 
-    if str(value.get()) == "both":
-        label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)) + "\n Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
-    elif str(value.get()) == "ecl":
-        label_pred.config(text = " Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
-    elif str(value.get()) == "edit":
-        label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)))
+    if str(can) == ".!toplevel.!frame.c1":
+        return predict_edit(freeman_chain,db)
+    else:
+        if str(value.get()) == "both":
+            label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)) + "\n Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
+        elif str(value.get()) == "ecl":
+            label_pred.config(text = " Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
+        elif str(value.get()) == "edit":
+            label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)))
+
+def feedback (guessnumb,randnum):
+    #choose lower number
+    if guessnumb > randnum:
+        return 3
+    elif guessnumb == randnum:
+        return 2
+    
+    #choose higher number
+    else:
+        return 1
+
+def val_game(db,can,val_game,lab_pred_game):
+    print(db)
+    predict_game = predict_can(fen,db,can)
+    
+    print(predict_game)
+    verif = feedback(predict_game,val_game)
+    
+    if verif == 1:
+        lab_pred_game.config(text="You tried "+str(predict_game)+", Try higher this time !")
+    elif verif == 3:
+        lab_pred_game.config(text="You tried "+str(predict_game)+", Try lower this time !")
+    else:
+        messagebox.showinfo("Congratulation", "Congrats you found the right number !")
+    
 
 #%%
 
 #Draw Module
-def draw (event): #Un argument est envoyé automatiquement à la fonction suite au can.bind(...), c'est
+def draw (event,can): #Un argument est envoyé automatiquement à la fonction suite au can.bind(...), c'est
     global WIDTH_CANVAS,HEIGHT_CANVAS
     x,y = event.x,event.y #une instance d'une classe qui fournit les coordonnées du clic dans le canvas
     #par le biais de ses attributs x et y (le nom event est donné à l'argument
                                            #conventionnellement
     can.create_oval(x-8,y-8,x+8,y+8, fill='black') #on crée un cercle de centre les coordonnées du clic dans notre Canvas "can"
-    if y < WIDTH_CANVAS and x < HEIGHT_CANVAS:
-        img[y,x] = 255
-        img[y+1,x+1] = 255
-        img[y-1,x-1] = 255
+    
+    if str(can) == ".!toplevel.!frame.c1":
+        if y < WIDTH_CANVAS and x < HEIGHT_CANVAS:
+            img_game[y,x] = 255
+            img_game[y+1,x+1] = 255
+            img_game[y-1,x-1] = 255
+    else:              
+        if y < WIDTH_CANVAS and x < HEIGHT_CANVAS:
+            img[y,x] = 255
+            img[y+1,x+1] = 255
+            img[y-1,x-1] = 255
 
-def desactivate(envent):
-    can.unbind("<Motion>")
+def desactivate(event,can_):
+    can_.unbind("<Motion>")
     
-def activate(event):
-    can.bind("<Motion>", draw)
+def activate(event,can_):
+    print(can_)
+    can_.bind("<Motion>", lambda event2,can_ = can_ : draw(event2,can_))
     
-def clear_canvas():
-    global WIDTH_CANVAS,HEIGHT_CANVAS,img
+def clear_canvas(can):
+    global WIDTH_CANVAS,HEIGHT_CANVAS,img,img_game
     can.delete("all")
-    img = np.zeros((WIDTH_CANVAS,HEIGHT_CANVAS))
+    
+    if str(can) == ".!toplevel.!frame.c1":
+        img_game = np.zeros((WIDTH_CANVAS,HEIGHT_CANVAS))
+    else:
+        img = np.zeros((WIDTH_CANVAS,HEIGHT_CANVAS))
 
 can = Canvas(Frame1, width =WIDTH_CANVAS, height =HEIGHT_CANVAS, bg="white")
-can.bind("<Button-1>", activate) #on lie le clic gauche à la fonction "rond"
-can.bind("<ButtonRelease-1>", desactivate) #on lie le clic gauche à la fonction "rond"
+can.bind("<Button-1>",lambda event,can =can: activate(event,can)) #on lie le clic gauche à la fonction "rond"
+can.bind("<ButtonRelease-1>",lambda event,can =can: desactivate(event,can)) #on lie le clic gauche à la fonction "rond"
 can.pack()
 
 # Select wanted distance to predict
@@ -124,8 +178,8 @@ ecl_dist.pack()
 edt_dist.pack()
 both_dist.pack()
 
-predict_btn = Button(Frame1, text='Predict', borderwidth=2, command=lambda: predict_can(fen,db)).pack(side=LEFT)
-clear_btn = Button(Frame1, text='Clear Canvas', borderwidth=2,command= clear_canvas).pack(side=RIGHT)
+predict_btn = Button(Frame1, text='Predict', borderwidth=2, command=lambda: predict_can(fen,db,can)).pack(side=LEFT)
+clear_btn = Button(Frame1, text='Clear Canvas', borderwidth=2,command=lambda: clear_canvas(can)).pack(side=RIGHT)
 
 label_pred = Label(Frame1_1)
 label_pred.pack()
@@ -162,6 +216,29 @@ def process_db_tk():
         messagebox.showinfo("Information", str(cpt)+" Irrevelants training example removed")
     else:
         messagebox.showinfo("Information", "Something went wrong, please try again.")
+        
+def faireApparaitreLeToplevel():
+    top=Toplevel(fen,name="!toplevel")
+    global img_game,WIDTH_CANVAS,HEIGHT_CANVAS
+    img_game = np.zeros((WIDTH_CANVAS,HEIGHT_CANVAS))
+    # frame 1
+    Frame1_top = Frame(top, borderwidth=2, relief=GROOVE)
+    Frame1_top.pack(side=LEFT, padx=30, pady=30)
+    Frame2_top = Frame(top, borderwidth=2, relief=GROOVE)
+    Frame2_top.pack(side=LEFT, padx=30, pady=30)
+    
+    can_top = Canvas(Frame1_top, width =WIDTH_CANVAS, height =HEIGHT_CANVAS, bg="white",name="c1")
+    can_top.bind("<Button-1>", lambda event,can_top =can_top : activate(event,can_top)) #on lie le clic gauche à la fonction "rond"
+    can_top.bind("<ButtonRelease-1>", lambda  event,can_top =can_top : desactivate(event,can_top)) #on lie le clic gauche à la fonction "rond"
+    can_top.pack()
+    
+    randnum = randint(1, 10)
+    correct = False
+    lab_pred_game=Label(Frame2_top, text="")
+    lab_pred_game.pack()  
+    
+    predict_btn_top = Button(Frame1_top, text='Validate', borderwidth=2, command=lambda: val_game(db,can_top,randnum,lab_pred_game)).pack(side=LEFT)
+    clear_btn_top = Button(Frame1_top, text='Clear Canvas', borderwidth=2,command=lambda: clear_canvas(can_top)).pack(side=RIGHT)
 
 #%%
 #Data Base Module
@@ -175,6 +252,9 @@ cross_val_score = Button(Frame2_1, text='Cross Validation score Edit', borderwid
 cross_val_score = Button(Frame2_1, text='Cross Validation score Euclidean', borderwidth=2,command= lambda: get_cross_val_score_ecl(v_e1,db)).pack(side=BOTTOM)
 e1 = Entry(Frame2_1,textvariable = v_e1).pack(side=BOTTOM)
 
+#bouton lanceur
+go = Button(Frame2_1 , text = 'Guess the Number !', command=faireApparaitreLeToplevel)
+go.pack()
 
 def add_db(val):
     # Connect to the database.
@@ -200,9 +280,6 @@ def add_db(val):
     train_list_edit = get_db_edit()
     train_list_ecl = get_db_ecl()
     
-    
-
-
 #%%
 buttons=np.zeros(10)
 for ligne in range(2):
