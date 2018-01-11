@@ -19,7 +19,7 @@ conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
 
 
 def get_max_min_avg():
-    sql_get_freeman = "SELECT `freeman_prod`,`label` FROM `freeman_prod`"
+    sql_get_freeman = "SELECT `sequence_freeman`,`val_sequence` FROM `sequences`"
     
     with conn.cursor() as cursor:
         cursor.execute(sql_get_freeman) #We execute our SQL request
@@ -44,7 +44,6 @@ def get_max_min_avg():
         print("Min Length = ", min_length)
         print("Average length = ",length/cpt)
         return max_length,min_length,(length/cpt)
-
 
 def reset_prod_db():
     SQL_reset_db="TRUNCATE TABLE freeman_prod"

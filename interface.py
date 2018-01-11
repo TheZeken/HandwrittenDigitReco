@@ -68,7 +68,7 @@ def predict_edit(freeman_chain_str,db):
     return result
     
 def predict_can(fen,db,can):
-    print(can)
+    #print(can)
     img_ = np.zeros((28,28))
     global img,value,img_game
     
@@ -99,6 +99,40 @@ def predict_can(fen,db,can):
             label_pred.config(text = " Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
         elif str(value.get()) == "edit":
             label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)))
+
+def predict_seq(fen,can):
+    img_ = np.zeros((28,28))
+    global img,value
+    
+    for i in range(0,WIDTH_CANVAS-3):
+            for j in range(0,HEIGHT_CANVAS-3):
+                if img_[int(i/4),int(j/4)] == 0 and img[i,j] == 255 and int(i/4) < 27 and int(j/4) < 27:
+                    img_[int(i/4),int(j/4)] = 255
+                    img_[int(i/4)+1,int(j/4)+1] = 255
+                    img_[int(i/4)-1,int(j/4)-1] = 255
+                         
+    scipy.misc.imsave('outfile.jpg', img_)  
+    freeman_chain,freeman_chain_str = get_freeman(img_)
+    
+    db_seq = []
+    sql_get_seq = "SELECT `sequence_freeman`,`val_sequence` FROM `sequences`"
+    with conn.cursor() as cursor:
+        cursor.execute(sql_get_seq) #We execute our SQL request
+        conn.commit()
+
+        for row in cursor:
+            db_seq.append( str(str(row[0])+str(row[1])))
+
+    vote = np.zeros(10)
+    for k in range(0,len(freeman_chain)):
+        if k+12 <len(freeman_chain):
+            seq_tmp = freeman_chain[k:k+12]
+            neighbours = getNeighbors_edit(db_seq,seq_tmp,5,False,"seq")
+            vote[int(getResponse(neighbours))] += 1
+            print(getResponse(neighbours))
+        else:
+             label_pred.config(text = "Prediction with sequence : " + str(np.argmax(vote)))
+    
 
 def feedback (guessnumb,randnum):
     #choose lower number
@@ -179,6 +213,7 @@ edt_dist.pack()
 both_dist.pack()
 
 predict_btn = Button(Frame1, text='Predict', borderwidth=2, command=lambda: predict_can(fen,db,can)).pack(side=LEFT)
+predict_btn_seq = Button(Frame1, text='Predict using sequences', borderwidth=2, command=lambda: predict_seq(fen,can)).pack(side=LEFT)
 clear_btn = Button(Frame1, text='Clear Canvas', borderwidth=2,command=lambda: clear_canvas(can)).pack(side=RIGHT)
 
 label_pred = Label(Frame1_1)
@@ -232,7 +267,7 @@ def faireApparaitreLeToplevel():
     can_top.bind("<ButtonRelease-1>", lambda  event,can_top =can_top : desactivate(event,can_top)) #on lie le clic gauche à la fonction "rond"
     can_top.pack()
     
-    randnum = randint(1, 10)
+    randnum = randint(0, 9)
     correct = False
     lab_pred_game=Label(Frame2_top, text="")
     lab_pred_game.pack()  
