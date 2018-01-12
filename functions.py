@@ -94,60 +94,7 @@ def trunc_prod_db():
     return True
     print("Database Truncated")
 
-def get_cross_val_score(e1,db):
-    
-    print("db = ", db)
-    
-    if e1.get() != "":
-        k = int(e1.get())
-    else:
-        k=5
-    SQL_count = "SELECT COUNT(*) FROM `freeman_prod`"
-    with conn.cursor() as cursor:
-        cursor.execute(SQL_count) #We execute our SQL request
-        conn.commit()
-        for row in cursor:
-            nb_inst = row[0]
-            
-    nb_inst_mat = int(nb_inst/k)
-    
-    accuracy = np.zeros(k)
-    accuracy_global = 0
-    SQL_get_freeman = "SELECT * FROM `freeman_prod`"
 
-    
-    for i in range(1,k+1):
-        df_train = pd.DataFrame()
-        df_test = pd.DataFrame()
-        cpt = 0
-        with conn.cursor() as cursor:
-            cursor.execute(SQL_get_freeman) #We execute our SQL request
-            conn.commit()
-            for row in cursor:
-                if cpt < i*nb_inst_mat and cpt >= i*nb_inst_mat-nb_inst_mat:
-                    cpt+=1
-                    values =[int(i) for i in row[1]]
-                    values.append(row[2])
-                    df_test = df_test.append([pd.DataFrame(values).T])
-                else:
-                    cpt+=1
-                    values =[int(i) for i in row[1]]
-                    values.append(row[2])
-                    df_train = df_train.append([pd.DataFrame(values).T])
-            list_train = df_train.values.tolist()
-            list_test = df_test.values.tolist()
-            
-            predictions = np.zeros(len(list_test))
-            for j in range(0,len(list_test)):
-                neighbours = getNeighbors_edit(list_train,list_test[j], 3,True,db)
-                predictions[j]= getResponse(neighbours)
-                    
-            accuracy[i-1] = getAccuracy(list_test,predictions)
-            print(accuracy[i-1])
-    for h in range(0,k):
-        accuracy_global += accuracy[h]
-    print(accuracy_global/k)
-    return accuracy_global/k
         
 def process_db():
     list_train = get_db_edit()
@@ -171,12 +118,6 @@ def process_db():
                     min_ = mat[i][j]
                 mean += mat[i][j]
                 cpt+=1
-        #print("Done for i = ",i,"With label =",chaine1[-1])
-       # print("For i =",i," We have the following values:")
-        #print("Compared to ", cpt, "other")
-        #print("Max =", max_)
-        #print("Min = ", min_)
-        #print("Mean =" , mean/cpt)
         mean_mat[i] = mean/cpt
         print(mean_mat[i])
         
@@ -201,59 +142,7 @@ def process_db():
             
         
     return True, cpt   
-    print("DONE")
     
-def get_cross_val_score_ecl(e1,db):
-    if e1.get() != "":
-        k = int(e1.get())
-    else:
-        k=5
-    SQL_count = "SELECT COUNT(*) FROM `freeman_prod`"
-    with conn.cursor() as cursor:
-        cursor.execute(SQL_count) #We execute our SQL request
-        conn.commit()
-        for row in cursor:
-            nb_inst = row[0]
-            
-    nb_inst_mat = int(nb_inst/k)
-    
-    accuracy = np.zeros(k)
-    accuracy_global = 0
-    SQL_get_freeman = "SELECT * FROM `freeman_prod`"
-
-    
-    for i in range(1,k+1):
-        df_train = pd.DataFrame()
-        df_test = pd.DataFrame()
-        cpt = 0
-        with conn.cursor() as cursor:
-            cursor.execute(SQL_get_freeman) #We execute our SQL request
-            conn.commit()
-            for row in cursor:
-                if cpt < i*nb_inst_mat and cpt >= i*nb_inst_mat-nb_inst_mat:
-                    cpt+=1
-                    values =[int(i) for i in row[1]]
-                    values.append(row[2])
-                    df_test = df_test.append([pd.DataFrame(values).T])
-                else:
-                    cpt+=1
-                    values =[int(i) for i in row[1]]
-                    values.append(row[2])
-                    df_train = df_train.append([pd.DataFrame(values).T])
-            list_train = df_train.values.tolist()
-            list_test = df_test.values.tolist()
-            
-            predictions = np.zeros(len(list_test))
-            for j in range(0,len(list_test)):
-                neighbours = getNeighbors_ecl(list_train,list_test[j], 3,True,db)
-                predictions[j]= getResponse(neighbours)
-                    
-            accuracy[i-1] = getAccuracy(list_test,predictions)
-            print(accuracy[i-1])
-    for h in range(0,k):
-        accuracy_global += accuracy[h]
-    print(accuracy_global/k)
-    return accuracy_global/k
 
     
     

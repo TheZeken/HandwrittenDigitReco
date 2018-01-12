@@ -25,6 +25,7 @@ sql_add_freeman = "INSERT INTO `freeman_number` (`freeman`, `label`) VALUES (%s,
 
 #%%
 # definitions
+
 path="C:\\Users\\jerem\\Desktop\\M2\\ML\\"
 
 size_x = 28
@@ -45,7 +46,6 @@ we use 0:[-1,0] (up) as the current starting point
 5:[-1,-1]   4:[1,0]     3:[1,1] 
 
 """
-
 
 change_y    =   [-1,-1,0,1,1, 1, 0, -1]
 change_x    =   [0,1,1,1,0,-1,-1, -1]
@@ -121,28 +121,6 @@ def show(image):
     pyplot.show()
 
 #%%
-"""
-sample_image =  6
-### the image to test the freeman code
-
-training_data = list(read(dataset="training", path=path))
-lg.debug(len(training_data))
-
-#for k in range(0,7000):
-label,pixels = training_data[sample_image]
-lg.debug(label)
-lg.debug(pixels.shape)
-#=======
-
-# on va convertir toute image en noir
-for x_bw in range(0,size_x):
-    for y_bw in range (0,size_y):
-        if pixels[x_bw,y_bw] > 0 :
-            pixels[x_bw,y_bw] = 255              
-#
-show(pixels)
-"""
-#%%
 
 def get_freeman(pixels_):
     global pixels,size_y,size_x,visited
@@ -215,20 +193,3 @@ def get_freeman(pixels_):
     print("freeman_chain_str = " ,freeman_chain_str)
     return freeman_chain,freeman_chain_str
     #label_int = int(label)
-
-#%%
-#freeman_hist = np.zeros(directions)
-#for i in freeman_chain:
-#    freeman_hist[i] += 1
-#print(freeman_hist)
-#
-#from matplotlib import pyplot                
-#
-#freeman_hist, bins, patches = pyplot.hist(freeman_chain)
-#pyplot.show()
-#print("freeman_hist = ", freeman_hist)
-#%%
-#Add to the database
-#with conn.cursor() as cursor:
- #   cursor.execute(sql_add_freeman,(freeman_chain_str,label_int)) #We execute our SQL request
-  #  conn.commit()
