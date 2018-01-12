@@ -12,6 +12,7 @@ import numpy as np
 
 import scipy.misc
 
+
 from fst_knn import *
 from freeman import *
 from functions import *
@@ -49,19 +50,21 @@ img = np.zeros((WIDTH_CANVAS,HEIGHT_CANVAS))
 train_list_edit = get_db_edit()
 train_list_ecl = get_db_ecl()
 
+db = "mnist"
+
 #%%
 # Prediction Part
-def predict_ecl(freeman_chain_str):
-    neighbors = getNeighbors_ecl(train_list_ecl,freeman_chain_str, k=3)
+def predict_ecl(freeman_chain_str,db):
+    neighbors = getNeighbors_ecl(train_list_ecl,freeman_chain_str, 3,db)
     result = getResponse(neighbors)
     return result
 
-def predict_edit(freeman_chain_str):
-    neighbors = getNeighbors_edit(train_list_edit,freeman_chain_str, k=3)
+def predict_edit(freeman_chain_str,db):
+    neighbors = getNeighbors_edit(train_list_edit,freeman_chain_str, 3,False,db)
     result = getResponse(neighbors)
     return result
     
-def predict_can(fen):
+def predict_can(fen,db):
     img_ = np.zeros((28,28))
     global img,value
     for i in range(0,WIDTH_CANVAS-3):
@@ -75,11 +78,11 @@ def predict_can(fen):
     freeman_chain,freeman_chain_str = get_freeman(img_)
 
     if str(value.get()) == "both":
-        label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain)) + "\n Prediction Euclidean : "+ str(predict_ecl(freeman_chain)))
+        label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)) + "\n Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
     elif str(value.get()) == "ecl":
-        label_pred.config(text = " Prediction Euclidean : "+ str(predict_ecl(freeman_chain)))
+        label_pred.config(text = " Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
     elif str(value.get()) == "edit":
-        label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain)))
+        label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)))
 
 #%%
 
@@ -121,31 +124,39 @@ ecl_dist.pack()
 edt_dist.pack()
 both_dist.pack()
 
-predict_btn = Button(Frame1, text='Predict', borderwidth=2, command=lambda: predict_can(fen)).pack(side=LEFT)
+predict_btn = Button(Frame1, text='Predict', borderwidth=2, command=lambda: predict_can(fen,db)).pack(side=LEFT)
 clear_btn = Button(Frame1, text='Clear Canvas', borderwidth=2,command= clear_canvas).pack(side=RIGHT)
 
 label_pred = Label(Frame1_1)
 label_pred.pack()
 #%% Popup for information
 def reset_prod_db_tk():
+    global db
+    db= "mnist"
     if reset_prod_db():
         messagebox.showinfo("Information", "The database has been reseted to : Mnist (100)")
     else:
         messagebox.showinfo("Information", "Something went wrong during the reset, please try again.")
 
 def trunc_prod_db_tk():
+    global db
+    db= "other"
     if trunc_prod_db():
         messagebox.showinfo("Information", "The database is now empty")
     else:
         messagebox.showinfo("Information", "Something went wrong, please try again.")
 
 def reset_our_prod_db_tk():
+    global db
+    db= "our"
     if reset_our_prod_db():
         messagebox.showinfo("Information", "The database has been reseted to : Ours ")
     else:
         messagebox.showinfo("Information", "Something went wrong during the reset, please try again.")
         
 def process_db_tk():
+    global db
+    db= "other"
     bina, cpt = process_db()
     if bina:
         messagebox.showinfo("Information", str(cpt)+" Irrevelants training example removed")
@@ -160,7 +171,8 @@ our_db = Button(Frame2, text='Get Ours / Reset DB', borderwidth=2,command= reset
 process_db_btn = Button(Frame2, text='Clean DB', borderwidth=2,command= process_db_tk).pack(side=LEFT)
 
 v_e1 = StringVar()
-cross_val_score = Button(Frame2_1, text='Cross Validation score', borderwidth=2,command= lambda: get_cross_val_score(v_e1)).pack(side=BOTTOM)
+cross_val_score = Button(Frame2_1, text='Cross Validation score Edit', borderwidth=2,command= lambda: get_cross_val_score(v_e1,db)).pack(side=BOTTOM)
+cross_val_score = Button(Frame2_1, text='Cross Validation score Euclidean', borderwidth=2,command= lambda: get_cross_val_score_ecl(v_e1,db)).pack(side=BOTTOM)
 e1 = Entry(Frame2_1,textvariable = v_e1).pack(side=BOTTOM)
 
 

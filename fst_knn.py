@@ -143,13 +143,24 @@ def levenshtein(chaine1, chaine2):
 """
 FOR PRODUCTION
 """
-def getNeighbors_ecl(list_train,testInstance, k):
+def getNeighbors_ecl(list_train,testInstance, k,cross_val=False,db="mnist"):
+    if db == "mnist":
+        k = 5
+    else:
+        k=1
+        
     distances = []
+    testInstance = removeNan(testInstance)
     testInstance = hist(testInstance)
     
     for x in range(len(list_train)):
-        dist = euclideanDistance(testInstance, list_train[x], 1)
-        distances.append((list_train[x], dist))
+        if cross_val == True:
+            train_hist = removeNan(list_train[x])
+            train_hist = hist(train_hist)
+        else:
+            train_hist = list_train[x]
+        dist = euclideanDistance(testInstance, train_hist, 8)
+        distances.append((train_hist, dist))
     distances.sort(key=operator.itemgetter(1))
     neighbors = []
     for x in range(k):
@@ -160,8 +171,13 @@ def getNeighbors_ecl(list_train,testInstance, k):
 # ----------------------- Get Neighbors only for Edit distance ----------------
 # returns k most similar neighbors from the training set 
 """ FOR PRODUCION"""
-def getNeighbors_edit(list_train,testInstance, k,cross_val=False):
+def getNeighbors_edit(list_train,testInstance, k,cross_val=False,db="mnist"):
     distances = []
+    if db == "mnist":
+        k = 5
+    else:
+        k=1
+    dist = []
     #print(len(list_train))
     for x in range(len(list_train)):
         chaine2 = removeNan(list_train[x])
