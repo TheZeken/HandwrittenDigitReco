@@ -66,6 +66,11 @@ def predict_edit(freeman_chain_str,db):
     neighbors = getNeighbors_edit(train_list_edit,freeman_chain_str, 3,False,db)
     result = getResponse(neighbors)
     return result
+
+def predict_edit_ineq(freeman_chain_str,db):
+    neighbors = getNeighbors_edit_ineq(train_list_edit,freeman_chain_str, 3)
+    result = getResponse(neighbors)
+    return result
     
 def predict_can(fen,db,can):
     #print(can)
@@ -90,15 +95,18 @@ def predict_can(fen,db,can):
     scipy.misc.imsave('outfile.jpg', img_)  
     freeman_chain,freeman_chain_str = get_freeman(img_)
 
-    if str(can) == ".!toplevel.!frame.c1":
-        return predict_edit(freeman_chain,db)
+    if str(value.get()) == "edit_ineq":
+        label_pred.config(text = "Prediction Edit with triangle inequality: " + str(predict_edit_ineq(freeman_chain_str,db)))
     else:
-        if str(value.get()) == "both":
-            label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)) + "\n Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
-        elif str(value.get()) == "ecl":
-            label_pred.config(text = " Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
-        elif str(value.get()) == "edit":
-            label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)))
+        if str(can) == ".!toplevel.!frame.c1":
+            return predict_edit(freeman_chain,db)
+        else:
+            if str(value.get()) == "both":
+                label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)) + "\n Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
+            elif str(value.get()) == "ecl":
+                label_pred.config(text = " Prediction Euclidean : "+ str(predict_ecl(freeman_chain,db)))
+            elif str(value.get()) == "edit":
+                label_pred.config(text = "Prediction Edit : " + str(predict_edit(freeman_chain,db)))
 
 def predict_seq(fen,can):
     img_ = np.zeros((28,28))
@@ -208,9 +216,11 @@ value.set("both")
 ecl_dist = Radiobutton(Frame1, text="Euclidean", variable=value, value="ecl")
 edt_dist = Radiobutton(Frame1, text="Edit", variable=value, value="edit")
 both_dist = Radiobutton(Frame1, text="Both", variable=value, value="both")
+edt_ineq = Radiobutton(Frame1, text="Edit ( Triangle Ineq )", variable=value, value="edit_ineq")
 ecl_dist.pack()
 edt_dist.pack()
 both_dist.pack()
+edt_ineq.pack()
 
 predict_btn = Button(Frame1, text='Predict', borderwidth=2, command=lambda: predict_can(fen,db,can)).pack(side=LEFT)
 predict_btn_seq = Button(Frame1, text='Predict using sequences', borderwidth=2, command=lambda: predict_seq(fen,can)).pack(side=LEFT)

@@ -16,13 +16,13 @@ import pandas as pd
 #%%
 # Database settings to downloads freeman codes
 # Connect to the database.
-<<<<<<< HEAD:1st_knn.py
-conn = pymysql.connect(db='ml_db', user='root', passwd='23Octobre', host='localhost')
+
+conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
 sql_get_freeman = "SELECT `freeman`,`label` FROM `freeman_number`"
-=======
+
 conn = pymysql.connect(db='ml_db', user='root', passwd='', host='localhost')
 sql_get_freeman = "SELECT `freeman_prod`,`label` FROM `freeman_prod`"
->>>>>>> 4a1197c469c64cf014c336638a7064b8a785f6a7:fst_knn.py
+
 
 sql_add_results = "INSERT INTO `knn_results` (`nb_train`, `nb_test`, `k_neighbours`, `accuracy`, `preprocess`, `distance`, `compute_time`,`nb_dataset`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
 #%%
@@ -141,6 +141,40 @@ def levenshtein(chaine1, chaine2):
                 cost = 0.5
             dist[i,j] = min(dist[i-1, j]+1, dist[i, j-1]+1, dist[i-1, j-1]+cost)
     return dist[len(chaine1),len(chaine2)]
+#%%
+#----------------------------------- Define the edit distance With triangle inequality------------------
+def levenshtein_ineq(string1, string2):
+#    print(string1)
+    chaine1 = list(string1)
+    chaine2 = list(string2)
+    chaine1 = chaine1[0:-1]
+    chaine2 = chaine2[0:-1]
+    dist = np.zeros((len(chaine1)+1,len(chaine2)+1))
+    for i in range(len(chaine1)+1):
+        dist[i, 0] = i
+    for j in range(len(chaine2)+1):
+        dist[0, j] = j
+    for i in range(1,len(chaine1)+1):
+        for j in range(1,len(chaine2)+1):
+            if int(chaine1[i-1]) == int(chaine2[j-1]):
+                cost = 0
+            elif (int(chaine2[j-1]) - int(chaine1[i-1])) %8 == 1:
+                cost = 1
+            elif (int(chaine2[j-1]) - int(chaine1[i-1])) %8 == 2:
+                cost = 2
+            elif (int(chaine2[j-1]) - int(chaine1[i-1])) %8 == 3:
+                cost = 3
+            elif (int(chaine2[j-1]) - int(chaine1[i-1])) %8 == 4:
+                cost = 4
+            elif (int(chaine2[j-1]) - int(chaine1[i-1])) %8 == 5:
+                cost = 3
+            elif (int(chaine2[j-1]) - int(chaine1[i-1])) %8 == 6:
+                cost = 2
+            elif (int(chaine2[j-1]) - int(chaine1[i-1])) %8 == 7:
+                cost = 1
+            dist[i,j] = min(dist[i-1, j]+2, dist[i, j-1]+2, dist[i-1, j-1]+cost)
+    return dist[len(chaine1),len(chaine2)]
+
 
 #%% 
 # ----------------------- Get Neighbors only for euclidean distance -----------
@@ -201,6 +235,59 @@ def getNeighbors_edit(list_train,testInstance, k,cross_val=False,db="mnist"):
     for x in range(k):
         neighbors.append(distances[x][0])
     return neighbors
+#%%
+# ----------------------- Get Neighbors only for Edit distance with triangle inequality ----------------
+# returns k most similar neighbors from the training set 
+def getNeighbors_edit_ineq(trainingSet, testInstance, k):
+    sql_get_distance = "SELECT `dist` FROM `precompute`"
+    with conn.cursor() as cursor:
+        cursor.execute(sql_get_distance) #We execute our SQL request
+        conn.commit()
+        
+        train_dist = {}    
+        distance = []
+        for row in cursor:
+            distance.append(row)
+        
+        for i in range(len(trainingSet)):
+            for j in range(i, len(trainingSet)):
+                train_dist[i, j] = distance[int(i * len(trainingSet) - (i*(i+1))/2 + j)]
+
+    min_dist = []
+    for i in range(k):
+        chaine2 = removeNan(trainingSet[i])
+        min_dist.append((i, chaine2, levenshtein_ineq( testInstance, chaine2)))    
+    i_max = max(min_dist,key=operator.itemgetter(2))
+    indiceTraining = list(range(k, len(trainingSet)))
+    
+    for j in indiceTraining:
+        chaine2_j = removeNan(trainingSet[j])
+        dist_c = levenshtein_ineq(testInstance, chaine2_j)
+        if(dist_c < i_max[2]):
+            min_dist.append((j, chaine2_j, dist_c))
+            min_dist.remove(i_max)
+            i_max = max(min_dist,key=operator.itemgetter(2))
+        else:
+            i = j+1
+            while i != len(trainingSet):
+                if(train_dist[j,i] < dist_c - i_max[2]):
+                    if i in indiceTraining:
+                        indiceTraining.remove(i)
+                elif(train_dist[j,i] > dist_c + i_max[2]):
+                    if i in indiceTraining:
+                        indiceTraining.remove(i)
+                i +=1 
+                while not(i in indiceTraining) & i != len(trainingSet):
+                    i+=1
+    neighbors = []
+    for x in range(k):
+#        print(min_dist[x][0])
+        neighbors.append(min_dist[x][1])
+#    print(neighbors)
+    
+#    print(testInstance)
+    return neighbors
+
 #%%
 # ----------Give the label which is the most common in our neighbours----------
 def getResponse(neighbors):
