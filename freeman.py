@@ -121,6 +121,7 @@ def show(image):
     pyplot.show()
 
 #%%
+"""
 sample_image =  6
 ### the image to test the freeman code
 
@@ -140,74 +141,80 @@ for x_bw in range(0,size_x):
             pixels[x_bw,y_bw] = 255              
 #
 show(pixels)
+"""
 #%%
-#Find the starting point for the freeman function
-start_x = 0
-start_y = 0
 
-for ii_y in range(0,size_y):
-    for ii_x in range(0,size_x):
-        if pixels[ii_y,ii_x] == 255:
-            start_y = ii_y
-            start_x = ii_x
-            break
-    else:
-        continue
-    break
-
-curr_x = start_x
-curr_y = start_y
-
-
-#on utilise curr_x, curr_y ci-dessous dans la boucle pour qu'on puisse porcourir le contour
-visited = np.zeros ((size_y,size_x)) # c'est pour se souvenir les pixels qu'on a deja parcouru
-visited[curr_y,curr_x] = 1 #we have visited this pixel
+def get_freeman(pixels_):
+    global pixels,size_y,size_x,visited
+    pixels = pixels_
+    #Find the starting point for the freeman function
+    start_x = 0
+    start_y = 0
     
-
-
-#c'est pour le deboggage...on peux afficher cela pour bien voir le contour qu'il avait parcouru
-freemancontour = np.zeros ((size_x,size_y))
-freemancontour[curr_y,curr_x] = 255
-
-
-"""
-1. find first pixel to start
-
-2.check the 8 pixels around this pixel in a clockwise direction to determine the possible direction to move
-this next pixel in question:
-   i. must be at the boundary (ie white space) 
-   ii. and must be consecutive (connected to the previous pixel)
-3.create a grid of visited pixels so that we don't back track accidentally
-"""
-
-freeman_chain = []
-freeman_chain_str=""
-
-disjoncteur = 1
-last_dir = 4
-#si on trouve qu'on a dépassé plusque 1 iteration sans bouger, le disjoncteur reste a 0, et la boucle s'arrete
-while disjoncteur:
-    disjoncteur = 0 
-    for dirs in range(0,directions):
-        #move into the first feasible pixel around a current pixel, while working in a clockwise direction ...dirs = 0 to 7
+    for ii_y in range(0,size_y):
+        for ii_x in range(0,size_x):
+            if pixels[ii_y,ii_x] == 255:
+                start_y = ii_y
+                start_x = ii_x
+                break
+        else:
+            continue
+        break
+    
+    curr_x = start_x
+    curr_y = start_y
+    
+    
+    #on utilise curr_x, curr_y ci-dessous dans la boucle pour qu'on puisse porcourir le contour
+    visited = np.zeros ((size_y,size_x)) # c'est pour se souvenir les pixels qu'on a deja parcouru
+    visited[curr_y,curr_x] = 1 #we have visited this pixel
         
-        if (feasible(curr_y+change_y[(dirs + last_dir - 4)%8 ],curr_x+change_x[(dirs + last_dir - 4)%8 ])):
-            visited[curr_y,curr_x] = 1
-            freeman_chain.append((dirs + last_dir - 4)%8 )
-            freeman_chain_str +=str((dirs + last_dir - 4)%8 )
-            curr_y = curr_y + change_y[(dirs + last_dir - 4)%8 ]
-            curr_x = curr_x + change_x[(dirs + last_dir - 4)%8 ]
-            disjoncteur = abs(change_y[(dirs + last_dir - 4)%8 ]) + abs(change_x[(dirs + last_dir - 4)%8 ]) 
-            freemancontour[curr_y,curr_x] = 100
-            last_dir = (dirs + last_dir - 4)%8 
-            #input("change_y " + str(change_y[dirs]) + " change x " + str(change_x[dirs]) + " dirs " + str(dirs) )
-            break
     
-show(freemancontour) ## affiche le plot du contour
-print("freeman_chain = ",freeman_chain)
-print(len(freeman_chain))
-print("freeman_chain_str = " ,freeman_chain_str)
-label_int = int(label)
+    
+    #c'est pour le deboggage...on peux afficher cela pour bien voir le contour qu'il avait parcouru
+    freemancontour = np.zeros ((size_x,size_y))
+    freemancontour[curr_y,curr_x] = 255
+    
+    
+    """
+    1. find first pixel to start
+    
+    2.check the 8 pixels around this pixel in a clockwise direction to determine the possible direction to move
+    this next pixel in question:
+       i. must be at the boundary (ie white space) 
+       ii. and must be consecutive (connected to the previous pixel)
+    3.create a grid of visited pixels so that we don't back track accidentally
+    """
+    
+    freeman_chain = []
+    freeman_chain_str=""
+    
+    disjoncteur = 1
+    last_dir = 4
+    #si on trouve qu'on a dépassé plusque 1 iteration sans bouger, le disjoncteur reste a 0, et la boucle s'arrete
+    while disjoncteur:
+        disjoncteur = 0 
+        for dirs in range(0,directions):
+            #move into the first feasible pixel around a current pixel, while working in a clockwise direction ...dirs = 0 to 7
+            
+            if (feasible(curr_y+change_y[(dirs + last_dir - 4)%8 ],curr_x+change_x[(dirs + last_dir - 4)%8 ])):
+                visited[curr_y,curr_x] = 1
+                freeman_chain.append((dirs + last_dir - 4)%8 )
+                freeman_chain_str +=str((dirs + last_dir - 4)%8 )
+                curr_y = curr_y + change_y[(dirs + last_dir - 4)%8 ]
+                curr_x = curr_x + change_x[(dirs + last_dir - 4)%8 ]
+                disjoncteur = abs(change_y[(dirs + last_dir - 4)%8 ]) + abs(change_x[(dirs + last_dir - 4)%8 ]) 
+                freemancontour[curr_y,curr_x] = 100
+                last_dir = (dirs + last_dir - 4)%8 
+                #input("change_y " + str(change_y[dirs]) + " change x " + str(change_x[dirs]) + " dirs " + str(dirs) )
+                break
+        
+    show(freemancontour) ## affiche le plot du contour
+    print("freeman_chain = ",freeman_chain)
+    print(len(freeman_chain))
+    print("freeman_chain_str = " ,freeman_chain_str)
+    return freeman_chain,freeman_chain_str
+    #label_int = int(label)
 
 #%%
 #freeman_hist = np.zeros(directions)
